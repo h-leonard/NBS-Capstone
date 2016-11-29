@@ -1,0 +1,46 @@
+---
+output:
+  pdfdocument:
+    latexengine: xelatex
+mainfont: Arial
+sansfont: Arial
+always_allow_html: yes
+---
+---
+title: `r submitter`
+---
+
+```{r, echo=FALSE}
+library(knitr)
+library(markdown)
+library(rmarkdown)
+```
+
+
+```{r, echo=FALSE}
+h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
+```
+
+
+Today is `r Sys.Date()`,
+
+The number of total samples collected is `r h$total_samples`.
+
+|                                   | Hospital || Virginia |
+| ----------------------------------|------|------|-----------|
+| **Number of samples submitted**            | `r h$total_samples`          | ---                              | VA 1 |
+| **Average transit time**                   | `r h$avg_transit_time`       | ---                              | VA 2 |
+| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours` | VA 3 |
+| **Samples transfused prior to collection** |                              |                                  |      |
+| **Unsatisfactory samples**                 | `r h$unsat_count`            |                                  |      |
+
+                                                                                  Hospital                                       Virginia
+-------------------------------------------------  ---------------------------------------------------------------------        ----------
+**Number of samples submitted**                        `r h$total_samples`       ---
+**Average transit time**                               `r h$avg_transit_time` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        --- 
+**Samples collected at < 24 hours of age**             `r h$col_less_than_24_hours` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  `r h$percent_less_than_24_hours`
+**Samples transfused prior to collection**
+**Unsatisfactory samples**                             `r h$unsat_count`
+-------------------------------------------------   ---------------------------------------------------------------------       ----------
+
+
