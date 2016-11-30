@@ -42,7 +42,7 @@ hospital_metrics <- dd %>%
     unsat_11 = ifelse(sum(UNSATCODE == 11, na.rm=TRUE) != 0, sum(UNSATCODE == 11, na.rm=TRUE), NA),
     unsat_12 = ifelse(sum(UNSATCODE == 12, na.rm=TRUE) != 0, sum(UNSATCODE == 12, na.rm=TRUE), NA),
     unsat_13 = ifelse(sum(UNSATCODE == 13, na.rm=TRUE) != 0, sum(UNSATCODE == 13, na.rm=TRUE), NA)
-)
+  )
 
 # Calculate percent of total unsatisfactory samples
 
@@ -86,20 +86,34 @@ hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$rec_in_2_day
 # Rank hospitals by number of samples collected at less than 24 hours of age (ascending order;
 #     e.g., least number of early collections = #1)
 hospital_metrics$rank_early_collection <- rank(hospital_metrics$col_less_than_24_hours[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                                  na.last="keep", ties.method="min")
+                                               na.last="keep", ties.method="min")
 
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_count[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                               na.last="keep", ties.method="min")
+                                     na.last="keep", ties.method="min")
 
-###### COMMENT OUT THIS CODE : ONLY USED FOR TESTING ON A SINGLE REPORT
+###### 
+# IF YOU WANT TO RUN **ALL** OF THE HOSPITAL REPORTS, 'COMMENT OUT' THE NEXT LINE
+# OF CODE (YOU CAN DO THIS BY ADDING A POUND SIGN CHARACTER TO THE START OF THE LINE 
+# BELOW)
 hospital_metrics = hospital_metrics[1,]
 ######
 
 # Generate report for each hospital
+
+###### 
+# CHANGE PATH VARIABLES BELOW TO CORRECT LOCATIONS FOR YOUR COMPUTER. THE FIRST PATH (r_file_path)
+# SHOULD BE THE LOCATION WHERE YOU HAVE "r_script_pdf.Rmd" STORED. THE SECOND PATH (output_path)
+# SHOULD BE WHERE YOU WANT THE REPORTS FOR THE HOSPITALS TO BE SAVED.
+r_file_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/"
+output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/reports"
+######
+
+render_file <- paste(r_file_path, "r_script_pdf.Rmd", sep="")
+
 for (submitter in hospital_metrics$SUBMITTERNAME){
-  rmarkdown::render(input = "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/r_script_pdf.Rmd", 
-        output_format = "pdf_document",
-        output_file = paste("test_report_", submitter, "_", Sys.Date(), ".pdf", sep=''),
-        output_dir = "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/reports")
+  rmarkdown::render(input = render_file, 
+                    output_format = "pdf_document",
+                    output_file = paste("test_report_", submitter, "_", Sys.Date(), ".pdf", sep=''),
+                    output_dir = output_path)
 }
