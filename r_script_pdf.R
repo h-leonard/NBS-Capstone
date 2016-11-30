@@ -52,19 +52,25 @@ unsatp <- (sum(!is.na(dd$UNSATCODE)))/nrow(dd)
 
 
 # Unsat percentage per specific hospital:
-
-################ does collected before 24 hours count as unsat??################################
-
-
 for (i in hospital_metrics$SUBMITTERNAME) {
   hospital_metrics["unsat%"] <- hospital_metrics$unsat_count/hospital_metrics$total_samples
 }
 
 
-# Calculate percent of specfic unsatisfactory samples
-
-
-
+# Calculate percent of specific unsatisfactory samples
+unsat1 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 1])))/nrow(dd)
+unsat2 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 2])))/nrow(dd)
+unsat3 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 3])))/nrow(dd)
+unsat4 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 4])))/nrow(dd)
+unsat5 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 5])))/nrow(dd)
+unsat6 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 6])))/nrow(dd)
+unsat7 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 7])))/nrow(dd)
+unsat8 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 8])))/nrow(dd)
+unsat9 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 9])))/nrow(dd)
+unsat10 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 10])))/nrow(dd)
+unsat11 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 11])))/nrow(dd)
+unsat12 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 12])))/nrow(dd)
+unsat13 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 13])))/nrow(dd)
 
 
 
