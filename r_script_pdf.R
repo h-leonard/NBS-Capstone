@@ -1,3 +1,9 @@
+# RUN variable_setting FILE - this code is 
+# dependent on variables created in that file
+
+# set working directory
+setwd(wd)
+
 # load packages
 library(knitr)
 library(markdown)
@@ -5,16 +11,19 @@ library(rmarkdown)
 library(dplyr)
 
 # read in data and reformat dates as dates
-dd <- read.csv('capstone.csv', sep='|')
+data_path_and_file <- paste(data_path, "/", data_file, sep="")
+dd <- read.csv(data_path_and_file, sep='|')
 dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y")
 dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y")
+start_date <- as.Date(start_date, "%m/%d/%Y")
+end_date <- as.Date(end_date, "%m/%d/%Y")
 
 # create data frame of required metrics for each submitter
 hospital_metrics <- dd %>%
   group_by(SUBMITTERNAME) %>%
   select(SUBMITTERNAME, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
-  filter(BIRTHDATE >= as.Date("2016-04-01") & BIRTHDATE <= as.Date("2016-06-30")) %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date %>%
   summarise(
     total_samples=n(),
     avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
@@ -100,16 +109,7 @@ hospital_metrics = hospital_metrics[1,]
 ######
 
 # Generate report for each hospital
-
-###### 
-# CHANGE PATH VARIABLES BELOW TO CORRECT LOCATIONS FOR YOUR COMPUTER. THE FIRST PATH (r_file_path)
-# SHOULD BE THE LOCATION WHERE YOU HAVE "r_script_pdf.Rmd" STORED. THE SECOND PATH (output_path)
-# SHOULD BE WHERE YOU WANT THE REPORTS FOR THE HOSPITALS TO BE SAVED.
-r_file_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/"
-output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/reports"
-######
-
-render_file <- paste(r_file_path, "r_script_pdf.Rmd", sep="")
+render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
 
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
