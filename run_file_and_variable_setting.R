@@ -33,12 +33,25 @@ output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/
 
 # DATES FOR REPORT
 # Enter the dates you want to use for generating the hospital reports
+# Use "mm/dd/yyyy" format (e.g., "04/01/2016")
 
 start_date <- "04/01/2016"
 end_date <- "06/30/2016"
 
+########
+
+# FUNCTIONALITY TEST
+# Do you want to run a report for a single submitter to test functionality,
+# or do you want reports for all submitters? Enter "Y" if you wish to run
+# only a single report, "N" otherwise
+
+test_report <- "Y"
+
 #########
 
-# RUN REPORT
-source("r_script_pdf.r")
+# RUN REPORT - do not change this code
+load_packages <- paste(wd, "/load_packages.r", sep="")
+run_file <- paste(wd, "/r_script_pdf.r", sep="")
+source(load_packages)
+source(run_file)
 
