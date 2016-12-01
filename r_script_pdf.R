@@ -1,14 +1,10 @@
-# RUN variable_setting FILE - this code is 
-# dependent on variables created in that file
+# DO NOT RUN THIS FILE DIRECTLY, AS THE VARIABLES USED FOR
+# FILE LOCATION AND NAMES ARE SET IN "run_file_and_variable_setting.R."
+# IF YOU RUN THAT FILE, IT WILL ALLOW YOU TO SET YOUR FILE LOCATIONS
+# AND ALSO RUN THIS FILE.
 
 # set working directory
 setwd(wd)
-
-# load packages
-library(knitr)
-library(markdown)
-library(rmarkdown)
-library(dplyr)
 
 # read in data and reformat dates as dates
 data_path_and_file <- paste(data_path, "/", data_file, sep="")
@@ -23,7 +19,7 @@ hospital_metrics <- dd %>%
   group_by(SUBMITTERNAME) %>%
   select(SUBMITTERNAME, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   summarise(
     total_samples=n(),
     avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
@@ -53,18 +49,16 @@ hospital_metrics <- dd %>%
     unsat_13 = ifelse(sum(UNSATCODE == 13, na.rm=TRUE) != 0, sum(UNSATCODE == 13, na.rm=TRUE), NA)
   )
 
-# Calculate percent of total unsatisfactory samples
 
+# Calculate percent of total unsatisfactory samples
 
 # Overall unsat percentage:
 unsatp <- (sum(!is.na(dd$UNSATCODE)))/nrow(dd)
-
 
 # Unsat percentage per specific hospital:
 for (i in hospital_metrics$SUBMITTERNAME) {
   hospital_metrics["unsat%"] <- hospital_metrics$unsat_count/hospital_metrics$total_samples
 }
-
 
 # Calculate percent of specific unsatisfactory samples
 unsat1 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 1])))/nrow(dd)
@@ -80,8 +74,6 @@ unsat10 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 10])))/nrow(dd)
 unsat11 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 11])))/nrow(dd)
 unsat12 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 12])))/nrow(dd)
 unsat13 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 13])))/nrow(dd)
-
-
 
 # Rank hospitals by mean transit time (ascending order; e.g., least mean transit time = #1)
 hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time[hospital_metrics$SUBMITTERNAME != "NA"], 
@@ -101,12 +93,9 @@ hospital_metrics$rank_early_collection <- rank(hospital_metrics$col_less_than_24
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_count[hospital_metrics$SUBMITTERNAME != "NA"], 
                                      na.last="keep", ties.method="min")
 
-###### 
-# IF YOU WANT TO RUN **ALL** OF THE HOSPITAL REPORTS, 'COMMENT OUT' THE NEXT LINE
-# OF CODE (YOU CAN DO THIS BY ADDING A POUND SIGN CHARACTER TO THE START OF THE LINE 
-# BELOW)
-hospital_metrics = hospital_metrics[1,]
-######
+# Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
+# than running all reports)
+if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
 
 # Generate report for each hospital
 render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
