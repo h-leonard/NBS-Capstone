@@ -40,6 +40,14 @@ end_date <- "06/30/2016"
 
 ########
 
+# QUARTERLY OR MONTHLY
+# Enter "quarterly" or "monthly" to define the parameters 
+# for the line chart for transit time and unsat count 
+
+line_chart <- "quarterly"
+
+#########
+
 # FUNCTIONALITY TEST
 # Do you want to run a report for a single submitter to test functionality,
 # or do you want reports for all submitters? Enter "Y" if you wish to run
@@ -54,4 +62,5 @@ load_packages <- paste(wd, "/load_packages.r", sep="")
 run_file <- paste(wd, "/r_script_pdf.r", sep="")
 source(load_packages)
 source(run_file)
+
 
