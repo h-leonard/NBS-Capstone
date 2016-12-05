@@ -34,6 +34,7 @@ hospital_metrics <- dd %>%
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
     trans = sum(TRANSFUSED == 'Y'), # need to validate how we identify these
     unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples,
     unsat_1 = ifelse(sum(UNSATCODE == 1, na.rm=TRUE) != 0, sum(UNSATCODE == 1, na.rm=TRUE), NA),
     unsat_2 = ifelse(sum(UNSATCODE == 2, na.rm=TRUE) != 0, sum(UNSATCODE == 2, na.rm=TRUE), NA),
     unsat_3 = ifelse(sum(UNSATCODE == 3, na.rm=TRUE) != 0, sum(UNSATCODE == 3, na.rm=TRUE), NA),
@@ -55,10 +56,6 @@ hospital_metrics <- dd %>%
 # Overall unsat percentage:
 unsatp <- (sum(!is.na(dd$UNSATCODE)))/nrow(dd)
 
-# Unsat percentage per specific hospital:
-for (i in hospital_metrics$SUBMITTERNAME) {
-  hospital_metrics["unsat%"] <- hospital_metrics$unsat_count/hospital_metrics$total_samples
-}
 
 # Calculate percent of specific unsatisfactory samples
 unsat1 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 1])))/nrow(dd)
