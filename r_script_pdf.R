@@ -32,7 +32,7 @@ hospital_metrics <- dd %>%
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME),
     percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
-    trans = sum(TRANSFUSED == 'Y')
+    trans = sum(TRANSFUSED == 'Y'),
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = unsat_count/total_samples,
     unsat_1 = ifelse(sum(UNSATCODE == 1, na.rm=TRUE) != 0, sum(UNSATCODE == 1, na.rm=TRUE), NA),
