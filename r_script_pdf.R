@@ -75,21 +75,15 @@ unsat13 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 13])))/nrow(dd)
 
 # Unsat samples per each hospital for previous 3 quarters
 
-quarter_start <- seq(as.Date(start_date, "%m/%d/%Y"), as.Date(end_date, "%m/%d/%Y"), by = "quarter")
+ #Calculate quarter end from user inputted start date
+quarter_end1 <- as.Date(as.yearqtr(start_date,"%m/%d/%Y") - 1/4, frac = 1)
+quarter_end2 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 1/2, frac = 1)
+quarter_end3 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 3/4, frac = 1)
 
-quarter_end <- c(as.Date(as.yearqtr(quarter_start[2])) - 1,
-                 as.Date(as.yearqtr(quarter_start[3])) - 1, as.Date(as.yearqtr(quarter_start[4])) - 1,
-                 as.Date(end_date, "%m/%d/%Y"))
-
-
-hospital_metrics1 <- dd
-hospital_metrics1sub <- hospital_metrics1[hospital_metrics1$BIRTHDATE >= quarter_start[2] & hospital_metrics1$BIRTHDATE <= quarter_end[2],]
-
-
-for (i in hospital_metrics1sub$SUBMITTERNAME) {
-  hospital_metrics1sub["unsat%"] <- hospital_metrics$unsat_count/hospital_metrics$total_samples
-}
-
+# Claculate quarter start date from each quarter end date
+quarter_start1 <- as.Date(as.yearqtr(quarter_end1) - 1/4, frac = 1) + 1
+quarter_start2 <- as.Date(as.yearqtr(quarter_end2) - 1/4, frac = 1) + 1
+quarter_start3 <- as.Date(as.yearqtr(quarter_end3) - 1/4, frac = 1) + 1
 
 
 
