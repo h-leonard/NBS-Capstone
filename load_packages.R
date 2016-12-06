@@ -5,4 +5,5 @@
 library(knitr)
 library(markdown)
 library(rmarkdown)
+library(zoo)
 library(dplyr)
