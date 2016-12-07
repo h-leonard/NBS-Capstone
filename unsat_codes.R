@@ -13,3 +13,6 @@ unsat_names <- c("Improperly Collected",
                  "Insufficient Quantity",
                  "Interfering Substances Present",
                  "Other")
+unsats <- as.data.frame(cbind(unsat_codes, 
+                              unsat_names))
+names(unsats) <- c('code','description')
