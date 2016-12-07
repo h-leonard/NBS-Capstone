@@ -1,6 +1,9 @@
-# Add quarters to the dataframe
-library(zoo)
-dd_copy$QUARTER <- as.yearqtr(dd_copy$BIRTHDATE, format="Q%q")
+# Add quarters to the dataframe 
+
+dd_copy <- dd
+dd_copy$QUARTER <- as.yearqtr(dd_copy$BIRTHDATE, format="%Y%m")
+
+as.yearqtr(Data$date, format = "%Y-%m-%d")
 
 # Group by submitter and quarter
 hospital_metrics <- dd_copy %>%
@@ -25,17 +28,26 @@ state_metrics <- dd_copy %>%
   )
 
 # Create line graph of transit time over the past 4 quarters for the submitter
-install.packages("reshape")
-
-library(ggplot2)
-library(reshape)
 
 p1 <- ggplot(hospital_metrics[2:5,], aes(x=QUARTER, y=avg_transit_time)) +
   scale_x_yearqtr(format="%Y Q%q", n=4) +
-  labs(title=hospital_metrics$SUBMITTERNAME[1], x="", y="Average Transit Time") +
-  geom_line(color="blue") +
-  geom_line(data=tail(state_metrics, 4), color="red") 
+  labs(x="Quarter", y="Days") +
+  ggtitle(bquote(atop("Average Transit Time", atop(italic(.(as.character(hospital_metrics$SUBMITTERNAME[1]))), "")))) + 
+  geom_line(data=tail(state_metrics, 4), color="black", size=1) +
+  geom_line(color="blue", size=2) +
+  geom_hline(color="green4", aes(yintercept=2)) +
+  geom_text(color="green4", aes(x=2015.6, y=2, label="Goal = 2 days", vjust=-1))
 p1
+
+# Create a line graph of unsatisfactory percentage over the past 4 quarters for the submitter
+p2 <- ggplot(hospital_metrics[2:5,], aes(x=QUARTER, y=unsat_percent)) +
+  scale_x_yearqtr(format="%Y Q%q", n=4) +
+  labs(x="Quarter", y="Percentage") +
+  geom_line(data=tail(state_metrics, 4), color="grey", size=2) +
+  ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(as.character(hospital_metrics$SUBMITTERNAME[1]))), "")))) +
+  geom_line(color="blue", size=2)
+p2
+  
 
 h <- hospital_metrics[2:5, c("QUARTER", "avg_transit_time")]
 s <- tail(state_metrics, 4)[c("QUARTER", "avg_transit_time")]
@@ -49,12 +61,3 @@ ggplot(zz, aes('QUARTER', value)) +
 
 ggplot(zz, aes(x, value, colour = L1)) + geom_point() +
   scale_colour_manual("Dataset", values = c("p1" = "blue", "p2" = "red", "p3" = "yellow"))
-
-
-
-
-
-# Create a line graph of unsatisfactory percentage over the past 4 quarters for the submitter
-p2 <- ggplot(hospital_metrics[1:5,], aes(x=QUARTER, y=unsat_percent)) +
-  labs(title=hospital_metrics$SUBMITTERNAME[1], x="Quarter", y="Unsatisfactory Percentage")
-p2 + geom_line()
