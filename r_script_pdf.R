@@ -30,7 +30,7 @@ hospital_metrics <- dd %>%
     met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=TRUE),
-    percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
+    percent_less_than_24_hours = ifelse(!is.infinite(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
     trans = sum(TRANSFUSED == 'Y'),
     trans_percent = trans/total_samples,
@@ -124,7 +124,7 @@ state <- dd %>%
                            sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=T),
-    percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
+    percent_less_than_24_hours = ifelse(!is.infinite(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
     trans = sum(TRANSFUSED == 'Y'),
     trans_percent = trans/total_samples,
