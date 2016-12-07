@@ -54,7 +54,7 @@ line_chart <- "quarterly"
 # or do you want reports for all submitters? Enter "Y" if you wish to run
 # only a single report, "N" otherwise
 
-test_report <- "Y"
+test_report <- "N"
 
 #########
 
