@@ -2,8 +2,10 @@
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
 
-library(knitr)
-library(markdown)
-library(rmarkdown)
-library(zoo)
-library(dplyr)
+suppressPackageStartupMessages(require('knitr'))
+suppressPackageStartupMessages(require('markdown'))
+suppressPackageStartupMessages(require('zoo'))
+suppressPackageStartupMessages(require('ggplot2'))
+suppressPackageStartupMessages(require('reshape'))
+suppressPackageStartupMessages(require('lubridate'))
+suppressPackageStartupMessages(require('dplyr'))
