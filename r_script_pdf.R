@@ -8,9 +8,9 @@ setwd(wd)
 
 # read in data and reformat dates as dates
 data_path_and_file <- paste(data_path, "/", data_file, sep="")
-dd <- read.csv(data_path_and_file, sep='|')
-dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y")
-dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y")
+dd <- read.csv(data_path_and_file, sep=separator)
+dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%y", origin = "1904-01-01")
+dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%y", origin = "1904-01-01")
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
 
@@ -80,7 +80,7 @@ quarter_end1 <- as.Date(as.yearqtr(start_date,"%m/%d/%Y") - 1/4, frac = 1)
 quarter_end2 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 1/2, frac = 1)
 quarter_end3 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 3/4, frac = 1)
 
-# Claculate quarter start date from each quarter end date
+# Calculate quarter start date from each quarter end date
 quarter_start1 <- as.Date(as.yearqtr(quarter_end1) - 1/4, frac = 1) + 1
 quarter_start2 <- as.Date(as.yearqtr(quarter_end2) - 1/4, frac = 1) + 1
 quarter_start3 <- as.Date(as.yearqtr(quarter_end3) - 1/4, frac = 1) + 1
@@ -118,3 +118,7 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
                     output_file = paste("test_report_", submitter, "_", Sys.Date(), ".pdf", sep=''),
                     output_dir = output_path)
 }
+
+# Remove variables from environment
+keep = 'dd'
+rm(list=setdiff(ls(), keep))
