@@ -22,25 +22,14 @@ h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 ```
 
 
-Today is `r Sys.Date()`,
-
-The number of total samples collected is `r h$total_samples`.
-
-|                                   | Hospital || Virginia |
+|                                   | Hospital | Percent | Ranking | Virginia |
 | ----------------------------------|------|------|-----------|
-| **Number of samples submitted**            | `r h$total_samples`          | ---                              | VA 1 |
-| **Average transit time**                   | `r h$avg_transit_time`       | ---                              | VA 2 |
-| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours` | VA 3 |
+| **Number of samples submitted** | `r h$total_samples` | -- | -- | `r state$total_samples` |
+| **Average transit time** | `r h$avg_transit_time` | -- | `r h$rank_transit` of `r state$submitters` | `r state$avg_transit_time` |
+| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours` | `r h$rank_early_collection` | `r state$percent_less_than_24_hours`
 | **Samples transfused prior to collection** |                              |                                  |      |
 | **Unsatisfactory samples**                 | `r h$unsat_count`            |                                  |      |
 
-                                                                                  Hospital                                       Virginia
--------------------------------------------------  ---------------------------------------------------------------------        ----------
-**Number of samples submitted**                        `r h$total_samples`       ---
-**Average transit time**                               `r h$avg_transit_time` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        --- 
-**Samples collected at < 24 hours of age**             `r h$col_less_than_24_hours` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  `r h$percent_less_than_24_hours`
-**Samples transfused prior to collection**
-**Unsatisfactory samples**                             `r h$unsat_count`
--------------------------------------------------   ---------------------------------------------------------------------       ----------
+
 
 
