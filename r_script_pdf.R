@@ -109,6 +109,31 @@ hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_count[hospital_metri
 # than running all reports)
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
 
+# Create metrics for state
+state <- dd %>%
+  select(TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
+         UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+  summarise(
+    total_samples=n(),
+    avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+    min_transit_time = min(TRANSIT_TIME, na.rm=TRUE),
+    max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
+    rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
+                           sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
+    met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
+    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME),
+    percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
+                                        col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
+    trans = sum(TRANSFUSED == 'Y'),
+    unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples
+  )
+
+# Add number of hospitals to state df
+state$submitters <- nrow(hospital_metrics)
+
 # Generate report for each hospital
 render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
 
@@ -120,5 +145,5 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
 }
 
 # Remove variables from environment
-keep = 'dd'
-rm(list=setdiff(ls(), keep))
+# keep = 'dd'
+# rm(list=setdiff(ls(), keep))
