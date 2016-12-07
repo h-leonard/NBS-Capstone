@@ -3,7 +3,7 @@
 # SET WORKING DIRECTORY
 # This should be where you have all of your R code files stored
 
-wd <- "~/Documents/Classes/DS 6001/Newborn Screening/Data"
+wd <- "~/Documents/Classes/DS 6001/Newborn Screening/Data/NBS-Capstone"
 
 #########
 
@@ -19,7 +19,8 @@ data_path <- "~/Documents/Classes/DS 6001/Newborn Screening/Data"
 # Enter the file name of the csv file that will be used
 # to generate the data for the reports
 
-data_file <- "Dummy data.csv"
+data_file <- "Dummy data with multiple quarters.csv"
+separator <- ","
 
 #########
 
@@ -62,5 +63,3 @@ load_packages <- paste(wd, "/load_packages.r", sep="")
 run_file <- paste(wd, "/r_script_pdf.r", sep="")
 source(load_packages)
 source(run_file)
-
-
