@@ -29,10 +29,11 @@ hospital_metrics <- dd %>%
                            sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
     met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
-                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME),
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=TRUE),
     percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
     trans = sum(TRANSFUSED == 'Y'),
+    trans_percent = trans/total_samples,
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = unsat_count/total_samples,
     unsat_1 = ifelse(sum(UNSATCODE == 1, na.rm=TRUE) != 0, sum(UNSATCODE == 1, na.rm=TRUE), NA),
@@ -121,12 +122,12 @@ state <- dd %>%
     max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
     rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
                            sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
-    met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
-                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME),
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=T),
     percent_less_than_24_hours = ifelse(!is.nan(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
                                         col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
     trans = sum(TRANSFUSED == 'Y'),
+    trans_percent = trans/total_samples,
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = unsat_count/total_samples
   )
