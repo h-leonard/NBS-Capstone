@@ -10,7 +10,7 @@ always_allow_html: yes
 title: `r submitter`
 ---
 
-```{r, echo=FALSE}
+```{r, include=FALSE, cache=FALSE, echo=FALSE}
 library(knitr)
 library(markdown)
 library(rmarkdown)
@@ -22,13 +22,15 @@ h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 ```
 
 
-|                                   | Hospital | Percent | Ranking | Virginia |
-| ----------------------------------|------|------|-----------|
+|      | Hospital || Ranking | Virginia |
+| -------------------------------------|--------|--------|---------|---------|
 | **Number of samples submitted** | `r h$total_samples` | -- | -- | `r state$total_samples` |
-| **Average transit time** | `r h$avg_transit_time` | -- | `r h$rank_transit` of `r state$submitters` | `r state$avg_transit_time` |
-| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours` | `r h$rank_early_collection` | `r state$percent_less_than_24_hours`
-| **Samples transfused prior to collection** |                              |                                  |      |
-| **Unsatisfactory samples**                 | `r h$unsat_count`            |                                  |      |
+| **Average transit time** | `r round(h$avg_transit_time, digits=2)` days | -- | `r h$rank_transit` of `r state$submitters` | `r round(state$avg_transit_time, digits=2)` days |
+| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=4)*100`% | `r h$rank_early_collection` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=4)*100`%
+| **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_early_collection` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
+| **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% | 
+
+
 
 
 
