@@ -11,15 +11,13 @@ wd <- "~/Documents/Classes/DS 6001/Newborn Screening/Data/NBS-Capstone"
 # This should be your directory (e.g., the location on your 
 # computer) where you have the data stored
 
-data_path <- "~/Documents/Classes/DS 6001/Newborn Screening/Data"
+data_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data_for_data_pull"
 
 #########
 
-# DATA FILE NAME
-# Enter the file name of the csv file that will be used
-# to generate the data for the reports
+# SEPARATOR
+# Enter the separator (e.g., '|' or ',' that is used to separate between fields)
 
-data_file <- "Dummy data with multiple quarters.csv"
 separator <- ","
 
 #########
@@ -36,8 +34,8 @@ output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/
 # Enter the dates you want to use for generating the hospital reports
 # Use "mm/dd/yyyy" format (e.g., "04/01/2016")
 
-start_date <- "04/01/2016"
-end_date <- "06/30/2016"
+start_date <- "04/01/2015"
+end_date <- "04/01/2016"
 
 ########
 
