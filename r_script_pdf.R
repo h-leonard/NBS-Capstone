@@ -6,9 +6,13 @@
 # set working directory
 setwd(wd)
 
-# read in data and reformat dates as dates
-data_path_and_file <- paste(data_path, "/", data_file, sep="")
-dd <- read.csv(data_path_and_file, sep=separator)
+# read in data
+# read in data
+files <- list.files(data_path, pattern="*.csv")
+temp <- paste(data_path, "/", files, sep="")
+dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE)))
+
+# reformat dates as dates
 dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%y", origin = "1904-01-01")
 dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%y", origin = "1904-01-01")
 start_date <- as.Date(start_date, "%m/%d/%Y")
@@ -147,4 +151,5 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
 
 # Remove variables from environment
 # keep = 'dd'
-# rm(list=setdiff(ls(), keep))
+keep = ''
+rm(list=setdiff(ls(), keep))
