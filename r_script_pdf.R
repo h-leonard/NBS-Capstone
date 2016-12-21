@@ -3,17 +3,10 @@
 # IF YOU RUN THAT FILE, IT WILL ALLOW YOU TO SET YOUR FILE LOCATIONS
 # AND ALSO RUN THIS FILE.
 
-# set working directory - ACTUAL CODE (not for use on Domino)
-# setwd(wd)
-
-# read in data - ACTUAL CODE (not for use on Domino)
-# files <- list.files(data_path, pattern="*.txt")
-# temp <- paste(data_path, "/", files, sep="")
-# dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
-
-# read in data - code for use on Domino only
-files <- list.files(path=".", pattern="*.txt")
-dd <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+# read in data
+files <- list.files(data_path, pattern="*.txt")
+temp <- paste(data_path, "/", files, sep="")
+dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
 
 # reformat dates as dates
 dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
@@ -21,13 +14,9 @@ dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y", origin = "1904-01-01")
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
 
-# read in submitter names as we wish them to appear in the report - ACTUAL CODE (not for use on Domino)
-# temp2 <- paste(submitters_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
-# submitters <- as.data.frame(read.csv(temp2, sep=","))
-# names(submitters) <- c("HOSPITALCODE","HOSPITALREPORT")
-
-# read in submitter names as we wish them to appear in the report - code for use on Domino only
-submitters <- as.data.frame(read.csv("VA NBS Report Card Hospital Names.csv", sep=","))
+# read in submitter names as we wish them to appear in the report
+temp2 <- paste(submitters_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
+submitters <- as.data.frame(read.csv(temp2, sep=","))
 names(submitters) <- c("HOSPITALCODE","HOSPITALREPORT")
 submitters$HOSPITALCODE <- as.character(submitters$HOSPITALCODE)
 
@@ -158,11 +147,8 @@ state <- dd %>%
 # Add number of hospitals to state df
 state$submitters <- nrow(hospital_metrics)
 
-# Generate report for each hospital - ACTUAL CODE (not for use on Domino)
-# render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
-
-# Code for use on Domino only
-render_file <- "r_script_pdf.Rmd"
+# Generate report for each hospital
+render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
 
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
