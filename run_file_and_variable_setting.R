@@ -3,7 +3,7 @@
 # SET WORKING DIRECTORY
 # This should be where you have all of your R code files stored
 
-wd <- "mnt"
+wd <- "r_files"
 
 #########
 
@@ -11,7 +11,7 @@ wd <- "mnt"
 # This should be your directory (e.g., the location on your 
 # computer) where you have the data stored
 
-data_path <- "mnt"
+data_path <- "data"
 
 #########
 
@@ -27,7 +27,7 @@ separator <- "|"
 # computer) where you have the file with the submitter names (as you wish them
 # to appear) and the IDs for the submitters
 
-submitters_path <- "mnt"
+submitters_path <- "submitters"
 
 #########
 
@@ -35,7 +35,7 @@ submitters_path <- "mnt"
 # Enter the location on your computer where you want the hospital
 # reports to be saved
 
-output_path <- "reports"
+output_path <- "/mnt/reports"
 
 ########
 
@@ -66,13 +66,7 @@ test_report <- "N"
 #########
 
 # RUN REPORT - do not change this code
-
-# Code to use just for Domino
-source("load_packages.R")
-source("r_script_pdf.R")
-
-# ACTUAL CODE (not for use on Domino)
-# load_packages <- paste(wd, "/load_packages.R", sep="")
-# run_file <- paste(wd, "/r_script_pdf.R", sep="")
-#source(load_packages)
-#source(run_file)
+load_packages <- paste(wd, "/load_packages.R", sep="")
+run_file <- paste(wd, "/r_script_pdf.R", sep="")
+source(load_packages)
+source(run_file)
