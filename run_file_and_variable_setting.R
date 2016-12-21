@@ -3,7 +3,7 @@
 # SET WORKING DIRECTORY
 # This should be where you have all of your R code files stored
 
-wd <- "~/Documents/Classes/DS 6001/Newborn Screening/Data/NBS-Capstone"
+wd <- "mnt"
 
 #########
 
@@ -11,14 +11,23 @@ wd <- "~/Documents/Classes/DS 6001/Newborn Screening/Data/NBS-Capstone"
 # This should be your directory (e.g., the location on your 
 # computer) where you have the data stored
 
-data_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data_for_data_pull"
+data_path <- "mnt"
 
 #########
 
 # SEPARATOR
-# Enter the separator (e.g., '|' or ',' that is used to separate between fields)
+# Enter the separator (e.g., '|' or ',' that is used to separate between fields in your data files)
 
-separator <- ","
+separator <- "|"
+
+#########
+
+# SUBMITTER NAMES FILE PATH
+# This should be your directory (e.g., the location on your
+# computer) where you have the file with the submitter names (as you wish them
+# to appear) and the IDs for the submitters
+
+submitters_path <- "mnt"
 
 #########
 
@@ -26,7 +35,7 @@ separator <- ","
 # Enter the location on your computer where you want the hospital
 # reports to be saved
 
-output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/Data/reports"
+output_path <- "reports"
 
 ########
 
@@ -34,8 +43,8 @@ output_path <- "/Users/chrispatrick/Documents/Classes/DS 6001/Newborn Screening/
 # Enter the dates you want to use for generating the hospital reports
 # Use "mm/dd/yyyy" format (e.g., "04/01/2016")
 
-start_date <- "04/01/2015"
-end_date <- "04/01/2016"
+start_date <- "07/01/2016"
+end_date <- "09/30/2016"
 
 ########
 
@@ -57,7 +66,13 @@ test_report <- "N"
 #########
 
 # RUN REPORT - do not change this code
-load_packages <- paste(wd, "/load_packages.r", sep="")
-run_file <- paste(wd, "/r_script_pdf.r", sep="")
-source(load_packages)
-source(run_file)
+
+# Code to use just for Domino
+source("load_packages.R")
+source("r_script_pdf.R")
+
+# ACTUAL CODE (not for use on Domino)
+# load_packages <- paste(wd, "/load_packages.R", sep="")
+# run_file <- paste(wd, "/r_script_pdf.R", sep="")
+#source(load_packages)
+#source(run_file)
