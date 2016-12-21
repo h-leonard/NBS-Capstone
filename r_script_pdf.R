@@ -3,23 +3,45 @@
 # IF YOU RUN THAT FILE, IT WILL ALLOW YOU TO SET YOUR FILE LOCATIONS
 # AND ALSO RUN THIS FILE.
 
-# set working directory
-setwd(wd)
+# set working directory - ACTUAL CODE (not for use on Domino)
+# setwd(wd)
 
-# read in data
-# read in data
-files <- list.files(data_path, pattern="*.csv")
-temp <- paste(data_path, "/", files, sep="")
-dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE)))
+# read in data - ACTUAL CODE (not for use on Domino)
+# files <- list.files(data_path, pattern="*.txt")
+# temp <- paste(data_path, "/", files, sep="")
+# dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+
+# read in data - code for use on Domino only
+files <- list.files(path=".", pattern="*.txt")
+dd <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
 
 # reformat dates as dates
-dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%y", origin = "1904-01-01")
-dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%y", origin = "1904-01-01")
+dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
+dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y", origin = "1904-01-01")
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
 
+# read in submitter names as we wish them to appear in the report - ACTUAL CODE (not for use on Domino)
+# temp2 <- paste(submitters_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
+# submitters <- as.data.frame(read.csv(temp2, sep=","))
+# names(submitters) <- c("HOSPITALCODE","HOSPITALREPORT")
+
+# read in submitter names as we wish them to appear in the report - code for use on Domino only
+submitters <- as.data.frame(read.csv("VA NBS Report Card Hospital Names.csv", sep=","))
+names(submitters) <- c("HOSPITALCODE","HOSPITALREPORT")
+submitters$HOSPITALCODE <- as.character(submitters$HOSPITALCODE)
+
+# add hospitalreport name to dd
+dd <- left_join(dd, submitters, by="HOSPITALCODE")
+
+# MAY NEED TO ADD ADDITIONAL CODE TO PULL IN 
+# SUBMITTER NAME BY SUBMITTER ID IF HOSPITAL CODE IS MISSING
+
+# replace submitter name with hospitalreport field
+dd$SUBMITTERNAME <- dd$HOSPITALREPORT
+
 # create data frame of required metrics for each submitter
-hospital_metrics <- dd %>%
+hospital_metrics <- dd[!is.na(dd$HOSPITALREPORT),] %>%
   group_by(SUBMITTERNAME) %>%
   select(SUBMITTERNAME, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
@@ -56,11 +78,8 @@ hospital_metrics <- dd %>%
   )
 
 
-# Calculate percent of total unsatisfactory samples
-
 # Overall unsat percentage:
 unsatp <- (sum(!is.na(dd$UNSATCODE)))/nrow(dd)
-
 
 # Calculate percent of specific unsatisfactory samples
 unsat1 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 1])))/nrow(dd)
@@ -80,7 +99,7 @@ unsat13 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 13])))/nrow(dd)
 
 # Unsat samples per each hospital for previous 3 quarters
 
- #Calculate quarter end from user inputted start date
+#Calculate quarter end from user inputted start date
 quarter_end1 <- as.Date(as.yearqtr(start_date,"%m/%d/%Y") - 1/4, frac = 1)
 quarter_end2 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 1/2, frac = 1)
 quarter_end3 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 3/4, frac = 1)
@@ -139,8 +158,11 @@ state <- dd %>%
 # Add number of hospitals to state df
 state$submitters <- nrow(hospital_metrics)
 
-# Generate report for each hospital
-render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
+# Generate report for each hospital - ACTUAL CODE (not for use on Domino)
+# render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
+
+# Code for use on Domino only
+render_file <- "r_script_pdf.Rmd"
 
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
@@ -151,5 +173,5 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
 
 # Remove variables from environment
 # keep = 'dd'
-keep = ''
-rm(list=setdiff(ls(), keep))
+# keep = ''
+# rm(list=setdiff(ls(), keep))
