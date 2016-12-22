@@ -1,2 +1,2 @@
 # NBS-Capstone
-Newborn screening capstone work with dummy data
+Newborn screening capstone work
