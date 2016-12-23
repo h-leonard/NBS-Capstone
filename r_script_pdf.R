@@ -150,6 +150,50 @@ state <- dd %>%
 # Add number of hospitals to state df
 state$submitters <- nrow(hospital_metrics)
  
+##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
+ 
+# Filter dd to include one year of data (dated backwards from end date)
+dd_plot <- filter(dd, BIRTHDATE > (end_date - years(1)) & 
+                    BIRTHDATE <= end_date, !is.na(HOSPITALREPORT))
+ 
+# add quarter information to dd_plot
+dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
+ 
+# group by submitter and quarter
+hospital_metrics_plot <- dd_plot %>%
+  group_by(SUBMITTERNAME, QUARTER) %>%
+  select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, QUARTER) %>%
+  summarise(
+    total_samples=n(),   
+    avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+    unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples * 100
+  )
+ 
+# determine limits for y-axes by finding max for avg_transit_time
+# and percentage of unsats and min for avg_transit_time. For avg_transit_time use
+# only the greatest value that is less than 4; for unsat percentage,
+# use only the greatest value that is less than 10. 
+avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
+unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
+max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4,avg_transit_col])
+min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
+max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10,unsat_percent_col])
+ 
+# Group by quarter for state totals (NOTE: this uses unweighted mean)
+state_plot <- dd_plot %>%
+  group_by(QUARTER) %>%
+  select(QUARTER, TRANSIT_TIME, UNSATCODE) %>%
+  summarise(
+    total_samples=n(),   
+    avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
+    unsat_count =  sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples * 100
+  )
+state_plot$SUBMITTERNAME <- 'State'
+ 
+#######################################################
+ 
 # Generate report for each hospital
 render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
  
