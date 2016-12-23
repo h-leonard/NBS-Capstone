@@ -17,18 +17,24 @@ library(rmarkdown)
  
 ```{r, echo=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
+hospital_filt <- ungroup(hospital_metrics_plot)
+h_plot <- hospital_filt[hospital_filt$SUBMITTERNAME==submitter,]
+h_plot$SUBMITTERNAME <- 'Hospital'
+max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
+max_transit_h <- max(max_overall_transit, h_plot$avg_transit_time)
+bound <- rbind(h_plot, state_plot)
 ```
  
  
 |      | Hospital || Hospital Rank | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
-| **Number of samples submitted** | `r h$total_samples` | -- | -- | `r state$total_samples` |
+| **Number of samples submitted** | `r h$total_samples` | -- | -- | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
 | **Average transit time** | `r round(h$avg_transit_time, digits=2)` days | -- | `r h$rank_transit` of `r state$submitters` | `r round(state$avg_transit_time, digits=2)` days |
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=4)*100`% | `r h$rank_early_collection` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=4)*100`%
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_early_collection` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% | 
  
-```{r echo=FALSE, results='markdown'}
+```{r, echo=FALSE, results='markdown'}
 # combine hospital's unsat counts with descriptions of codes
 temp_unsats <- as.data.frame(t(select(h, unsat_1:unsat_13)))
 names(temp_unsats) <- c('count')
@@ -37,10 +43,44 @@ unsats_count <- cbind(unsats, temp_unsats)
 # remove all rows with NA for counts
 unsats_final <- unsats_count[!is.na(unsats_count$count),]
  
-# show unsat counts for each category if unsats final has 1 or more observations
+# show unsat counts for each category if unsats_final has more than 0 observations
 if (nrow(unsats_final) > 0) {
   unsats_final <- unsats_final[,2:3]
   names(unsats_final) <- c('Unsatisfactory Samples','Count')
   kable(unsats_final, row.names=FALSE)
 }
+```
+ 
+```{r, fig.width=3.2, echo=FALSE}
+ 
+# Plot average transit time over past 4 quarters
+ggplot(bound, aes(x=QUARTER, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+  scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
+                  format = "%Y Q%q") +
+  scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
+  labs(x="Quarter", y="Days") +
+  ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
+  geom_line(size=2) +
+  scale_color_manual(values=c("blue","grey59")) +
+  geom_hline(color="green4", aes(yintercept=2), size=2) +
+  geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .166), y=2, label="Goal: under 2 days", vjust=1.5)) +
+  theme(legend.title=element_blank()) + 
+  theme(legend.position="bottom") +
+  theme(legend.text = element_text(size = 10)) +
+  theme(plot.title = element_text(size = 10, face = "bold"))
+ 
+# Plot percentage of unsatisfactory samples over past 4 quarters
+ggplot(bound, aes(x=QUARTER, y=unsat_percent, colour=SUBMITTERNAME, 
+                  group=rev(SUBMITTERNAME))) +
+  scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
+                  format = "%Y Q%q") +
+  scale_y_continuous(limits=c(0, max_unsat_h)) +
+  labs(x="Quarter", y="Percentage") +
+  ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
+  geom_line(size=2) +
+  scale_color_manual(values=c("blue","grey59")) +
+  theme(legend.title=element_blank()) +
+  theme(legend.position="bottom") +
+  theme(legend.text = element_text(size = 10)) +
+  theme(plot.title = element_text(size = 10, face = "bold"))
 ```
