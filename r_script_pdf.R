@@ -75,11 +75,11 @@ hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time, na.last
  
 # Rank hospitals by percentage of samples recevied within 2 days (descending order; e.g.,
 #      greatest percentage of samples received by target time = #1)
-hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$rec_in_2_days, na.last="keep", ties.method="min")
+hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$percent_rec_in_2_days, na.last="keep", ties.method="min")
  
 # Rank hospitals by number of samples collected at less than 24 hours of age (ascending order;
 #     e.g., least number of early collections = #1)
-hospital_metrics$rank_early_collection <- rank(hospital_metrics$col_less_than_24_hours, na.last="keep", ties.method="min")
+hospital_metrics$rank_early_collection <- rank(hospital_metrics$percent_less_than_24_hours, na.last="keep", ties.method="min")
  
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="keep", ties.method="min")
