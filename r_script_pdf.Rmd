@@ -32,7 +32,7 @@ bound <- rbind(h_plot, state_plot)
 | **Average transit time** | `r round(h$avg_transit_time, digits=2)` days |  | `r h$rank_transit` of `r state$submitters` | `r round(state$avg_transit_time, digits=2)` days |
 | &nbsp;&nbsp;&nbsp;&nbsp;Minimum transit time | `r h$min_transit_time` days |  |  |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;Maximum transit time | `r h$max_transit_time` days |  |  |  |
-| **Samples received within 2 days (GOAL: 95%)** | `r h$rec_in_2_days` | `r round(h$percent_rec_in_2_days, digits=2)`% | `r h$rank_percent_within_goal` of `r state$submitters` | `r round(state$percent_rec_in_2_days, digits=2) * 100`% |
+| **Samples received within 2 days (GOAL: 95%)** | `r format(h$rec_in_2_days, big.mark=",", trim=TRUE)` | `r round(h$percent_rec_in_2_days, digits=2)`% | `r h$rank_percent_within_goal` of `r state$submitters` | `r round(state$percent_rec_in_2_days, digits=2) * 100`% |
 | &nbsp;&nbsp;&nbsp;&nbsp;Met goal? | `r ifelse(h$met_goal==1, 'No', 'Yes')`|  |  |  | 
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=4)*100`% | `r h$rank_early_collection` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=4)*100`%
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_early_collection` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
