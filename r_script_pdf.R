@@ -43,8 +43,9 @@ hospital_metrics <- dd[!is.na(dd$HOSPITALREPORT),] %>%
     avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
     min_transit_time = min(TRANSIT_TIME, na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
-    rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
-                           sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
+    rec_in_2_days = sum(TRANSIT_TIME <= 2, na.rm=TRUE),
+    percent_rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
+                           sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA) * 100,
     met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=TRUE),
@@ -69,57 +70,22 @@ hospital_metrics <- dd[!is.na(dd$HOSPITALREPORT),] %>%
     unsat_13 = ifelse(sum(UNSATCODE == 13, na.rm=TRUE) != 0, sum(UNSATCODE == 13, na.rm=TRUE), NA)
   )
  
- 
-# Overall unsat percentage:
-unsatp <- (sum(!is.na(dd$UNSATCODE)))/nrow(dd)
- 
-# Calculate percent of specific unsatisfactory samples
-unsat1 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 1])))/nrow(dd)
-unsat2 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 2])))/nrow(dd)
-unsat3 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 3])))/nrow(dd)
-unsat4 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 4])))/nrow(dd)
-unsat5 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 5])))/nrow(dd)
-unsat6 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 6])))/nrow(dd)
-unsat7 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 7])))/nrow(dd)
-unsat8 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 8])))/nrow(dd)
-unsat9 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 9])))/nrow(dd)
-unsat10 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 10])))/nrow(dd)
-unsat11 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 11])))/nrow(dd)
-unsat12 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 12])))/nrow(dd)
-unsat13 <- (sum(!is.na(dd$UNSATCODE[dd$UNSATCODE == 13])))/nrow(dd)
- 
- 
-# Unsat samples per each hospital for previous 3 quarters
- 
- #Calculate quarter end from user inputted start date
-quarter_end1 <- as.Date(as.yearqtr(start_date,"%m/%d/%Y") - 1/4, frac = 1)
-quarter_end2 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 1/2, frac = 1)
-quarter_end3 <- as.Date(as.yearqtr(start_date, "%m/%d/%Y") - 3/4, frac = 1)
- 
-# Calculate quarter start date from each quarter end date
-quarter_start1 <- as.Date(as.yearqtr(quarter_end1) - 1/4, frac = 1) + 1
-quarter_start2 <- as.Date(as.yearqtr(quarter_end2) - 1/4, frac = 1) + 1
-quarter_start3 <- as.Date(as.yearqtr(quarter_end3) - 1/4, frac = 1) + 1
- 
- 
- 
 # Rank hospitals by mean transit time (ascending order; e.g., least mean transit time = #1)
-hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                      na.last="keep", ties.method="min")
+hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time, na.last="keep", ties.method="min")
  
 # Rank hospitals by percentage of samples recevied within 2 days (descending order; e.g.,
 #      greatest percentage of samples received by target time = #1)
-hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$rec_in_2_days[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                                  na.last="keep", ties.method="min")
+hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$rec_in_2_days, na.last="keep", ties.method="min")
  
 # Rank hospitals by number of samples collected at less than 24 hours of age (ascending order;
 #     e.g., least number of early collections = #1)
-hospital_metrics$rank_early_collection <- rank(hospital_metrics$col_less_than_24_hours[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                               na.last="keep", ties.method="min")
+hospital_metrics$rank_early_collection <- rank(hospital_metrics$col_less_than_24_hours, na.last="keep", ties.method="min")
  
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
-hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_count[hospital_metrics$SUBMITTERNAME != "NA"], 
-                                     na.last="keep", ties.method="min")
+hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="keep", ties.method="min")
+ 
+# Determine number of hospitals
+tot_sub <- nrow(hospital_metrics)
  
 # Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
 # than running all reports)
@@ -135,7 +101,8 @@ state <- dd %>%
     avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
     min_transit_time = min(TRANSIT_TIME, na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
-    rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
+    rec_in_2_days = sum(TRANSIT_TIME <= 2, na.rm=TRUE),
+    percent_rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
                            sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=T),
@@ -148,13 +115,15 @@ state <- dd %>%
   )
  
 # Add number of hospitals to state df
-state$submitters <- nrow(hospital_metrics)
+state$submitters <- tot_sub
  
 ##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
  
+quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
+ 
 # Filter dd to include one year of data (dated backwards from end date)
-dd_plot <- filter(dd, BIRTHDATE > (end_date - years(1)) & 
-                    BIRTHDATE <= end_date, !is.na(HOSPITALREPORT))
+dd_plot <- filter(dd, BIRTHDATE > (quarter_end - years(1)) & 
+                    BIRTHDATE <= quarter_end, !is.na(HOSPITALREPORT))
  
 # add quarter information to dd_plot
 dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
@@ -176,9 +145,9 @@ hospital_metrics_plot <- dd_plot %>%
 # use only the greatest value that is less than 10. 
 avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
 unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4,avg_transit_col])
+max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
 min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
-max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10,unsat_percent_col])
+max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
  
 # Group by quarter for state totals (NOTE: this uses unweighted mean)
 state_plot <- dd_plot %>%
