@@ -55,38 +55,82 @@ if (nrow(unsats_final) > 0) {
 }
 ```
  
+ 
 ```{r, fig.width=3.2, echo=FALSE}
  
-# Plot average transit time over past 4 quarters
-ggplot(bound, aes(x=QUARTER, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
-  scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
-                  format = "%Y Q%q") +
-  scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
-  labs(x="Quarter", y="Days") +
-  ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
-  geom_line(size=2) +
-  scale_color_manual(values=c("blue","grey59")) +
-  geom_hline(color="green4", aes(yintercept=2), size=2) +
-  geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .18), y=min_overall_transit, label="Goal: under 2 days")) + 
-  theme(legend.title=element_blank()) + 
-  theme(legend.position="bottom") +
-  theme(legend.text = element_text(size = 10)) +
-  theme(plot.title = element_text(size = 10, face = "bold")) +
-  theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
- 
-# Plot percentage of unsatisfactory samples over past 4 quarters
-ggplot(bound, aes(x=QUARTER, y=unsat_percent, colour=SUBMITTERNAME, 
+if (line_chart == 'quarterly') {
+  
+  # Plot average transit time over past 4 quarters
+  p1 <- ggplot(bound, aes(x=QUARTER, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25), format = "%Y Q%q") +
+    scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
+    labs(x="Quarter", y="Days") +
+    ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
+    geom_line(size=2) +
+    scale_color_manual(values=c("blue","grey59")) +
+    geom_hline(color="green4", aes(yintercept=2), size=2) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .18), 
+              y=min_overall_transit, label="Goal: under 2 days")) + 
+    theme(legend.title=element_blank()) + 
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.title = element_text(size = 10, face = "bold")) +
+    theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
+  
+  # Plot percentage of unsatisfactory samples over past 4 quarters
+  p2 <- ggplot(bound, aes(x=QUARTER, y=unsat_percent, colour=SUBMITTERNAME, 
                   group=rev(SUBMITTERNAME))) +
-  scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
+    scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
                   format = "%Y Q%q") +
-  scale_y_continuous(limits=c(0, max_unsat_h)) +
-  labs(x="Quarter", y="Percentage") +
-  ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
-  geom_line(size=2) +
-  scale_color_manual(values=c("blue","grey59")) +
-  theme(legend.title=element_blank()) +
-  theme(legend.position="bottom") +
-  theme(legend.text = element_text(size = 10)) +
-  theme(plot.title = element_text(size = 10, face = "bold")) +
-  theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
+    scale_y_continuous(limits=c(0, max_unsat_h)) +
+    labs(x="Quarter", y="Percentage") +
+    ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
+    geom_line(size=2) +
+    scale_color_manual(values=c("blue","grey59")) +
+    theme(legend.title=element_blank()) +
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.title = element_text(size = 10, face = "bold")) +
+    theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
+  
+} else {
+  
+  # Plot average transit time over past 12 months
+  p1 <- ggplot(bound, aes(x=MONTH, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearmon(breaks = seq(from = min(bound$MONTH), to = max(bound$MONTH), by = 0.25),
+                  format = "%b %Y") +
+    scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
+    labs(x="Month", y="Days") +
+    ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
+    geom_line(size=2) +
+    scale_color_manual(values=c("blue","grey59")) +
+    geom_hline(color="green4", aes(yintercept=2), size=2) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$MONTH)) + .18), y=min_overall_transit, label="Goal: under 2 days")) + 
+    theme(legend.title=element_blank()) + 
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.title = element_text(size = 10, face = "bold")) +
+    theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
+ 
+# Plot percentage of unsatisfactory samples over past 12 months
+  p2 <- ggplot(bound, aes(x=MONTH, y=unsat_percent, colour=SUBMITTERNAME, 
+                  group=rev(SUBMITTERNAME))) +
+    scale_x_yearmon(breaks = seq(from = min(bound$MONTH), to = max(bound$MONTH), by = 0.25),
+                  format = "%b %Y") +
+    scale_y_continuous(limits=c(0, max_unsat_h)) +
+    labs(x="Month", y="Percentage") +
+    ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
+    geom_line(size=2) +
+    scale_color_manual(values=c("blue","grey59")) +
+    theme(legend.title=element_blank()) +
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.title = element_text(size = 10, face = "bold")) +
+    theme(plot.margin = unit(c(0.3,0.3,0.3,0.3), "cm"))
+}
+ 
+par(oma=c(2,4,4,2),mfrow=c(1,2))
+ 
+p1
+p2
 ```
