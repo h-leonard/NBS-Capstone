@@ -118,48 +118,94 @@ state <- dd %>%
 state$submitters <- tot_sub
  
 ##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
+if (line_chart == "quarterly") {
+  quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
  
-quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
- 
-# Filter dd to include one year of data (dated backwards from end date)
-dd_plot <- filter(dd, BIRTHDATE > (quarter_end - years(1)) & 
+  # Filter dd to include one year of data (dated backwards from end date)
+  dd_plot <- filter(dd, BIRTHDATE > (quarter_end - years(1)) & 
                     BIRTHDATE <= quarter_end, !is.na(HOSPITALREPORT))
  
-# add quarter information to dd_plot
-dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
+  # add quarter information to dd_plot
+  dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
  
-# group by submitter and quarter
-hospital_metrics_plot <- dd_plot %>%
-  group_by(SUBMITTERNAME, QUARTER) %>%
-  select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, QUARTER) %>%
-  summarise(
-    total_samples=n(),   
-    avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
-    unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
-  )
+  # group by submitter and quarter
+  hospital_metrics_plot <- dd_plot %>%
+    group_by(SUBMITTERNAME, QUARTER) %>%
+    select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, QUARTER) %>%
+    summarise(
+      total_samples=n(),   
+      avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+      unsat_count = sum(!is.na(UNSATCODE)),
+      unsat_percent = unsat_count/total_samples * 100
+    )
  
-# determine limits for y-axes by finding max for avg_transit_time
-# and percentage of unsats and min for avg_transit_time. For avg_transit_time use
-# only the greatest value that is less than 4; for unsat percentage,
-# use only the greatest value that is less than 10. 
-avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
-unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
-min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
-max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
+  # determine limits for y-axes by finding max for avg_transit_time
+  # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
+  # only the greatest value that is less than 4; for unsat percentage,
+  # use only the greatest value that is less than 10. 
+  avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
+  unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
+  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
+  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
+  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
  
-# Group by quarter for state totals (NOTE: this uses unweighted mean)
-state_plot <- dd_plot %>%
-  group_by(QUARTER) %>%
-  select(QUARTER, TRANSIT_TIME, UNSATCODE) %>%
-  summarise(
-    total_samples=n(),   
-    avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
-    unsat_count =  sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
-  )
-state_plot$SUBMITTERNAME <- 'State'
+  # Group by quarter for state totals (NOTE: this uses unweighted mean)
+  state_plot <- dd_plot %>%
+    group_by(QUARTER) %>%
+    select(QUARTER, TRANSIT_TIME, UNSATCODE) %>%
+    summarise(
+      total_samples=n(),   
+      avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
+      unsat_count =  sum(!is.na(UNSATCODE)),
+      unsat_percent = unsat_count/total_samples * 100
+    )
+  state_plot$SUBMITTERNAME <- 'State'
+}
+  
+##### CREATE DATA FRAMES FOR USE IN MONTH PLOTS #####
+if (line_chart == "monthly") {
+  month_end <- as.Date(as.yearmon(end_date), frac=1)
+  
+  # Filter dd to include one year of data (dated backwards from end date)
+  dd_plot <- filter(dd, BIRTHDATE > (month_end - years(1)) & 
+                      BIRTHDATE <= month_end, !is.na(HOSPITALREPORT))
+  
+  # add month information to dd_plot
+  dd_plot$MONTH <- as.yearmon(dd_plot$BIRTHDATE, format="%Y%m")
+  
+  # group by submitter and month
+  hospital_metrics_plot <- dd_plot %>%
+    group_by(SUBMITTERNAME, MONTH) %>%
+    select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, MONTH) %>%
+    summarise(
+      total_samples=n(),   
+      avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+      unsat_count = sum(!is.na(UNSATCODE)),
+      unsat_percent = unsat_count/total_samples * 100
+    )
+  
+  # determine limits for y-axes by finding max for avg_transit_time
+  # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
+  # only the greatest value that is less than 4; for unsat percentage,
+  # use only the greatest value that is less than 10. 
+  avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
+  unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
+  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
+  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
+  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
+  
+  # Group by month for state totals (NOTE: this uses unweighted mean)
+  state_plot <- dd_plot %>%
+    group_by(MONTH) %>%
+    select(MONTH, TRANSIT_TIME, UNSATCODE) %>%
+    summarise(
+      total_samples=n(),   
+      avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
+      unsat_count =  sum(!is.na(UNSATCODE)),
+      unsat_percent = unsat_count/total_samples * 100
+    )
+  state_plot$SUBMITTERNAME <- 'State'
+}
  
 #######################################################
  
