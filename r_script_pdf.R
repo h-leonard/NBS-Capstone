@@ -7,15 +7,19 @@
 unsats <- read.csv(paste(codes_path, "/", "unsat_codes.csv", sep=""))
  
 # read in submitter names as we wish them to appear in the report
-temp2 <- paste(codes_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
-submitters <- as.data.frame(read.csv(temp2, sep=","))
-names(submitters) <- c("HOSPITALCODE","HOSPITALREPORT")
-submitters$HOSPITALCODE <- as.character(submitters$HOSPITALCODE)
+temp <- paste(codes_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
+submitters <- as.data.frame(read.csv(temp, sep=","))
+names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
+submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
 # read in data
 files <- list.files(data_path, pattern="*.txt")
-temp <- paste(data_path, "/", files, sep="")
-dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+temp2 <- paste(data_path, "/", files, sep="")
+dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+ 
+# remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
+remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
+dd <- filter(dd, !(CATEGORY %in% remove_cats))
  
 # reformat dates as dates
 dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
@@ -24,10 +28,7 @@ start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
  
 # add hospitalreport name to dd
-dd <- left_join(dd, submitters, by="HOSPITALCODE")
- 
-# MAY NEED TO ADD ADDITIONAL CODE TO PULL IN 
-# SUBMITTER NAME BY SUBMITTER ID IF HOSPITAL CODE IS MISSING
+dd <- left_join(dd, submitters, by="SUBMITTERID")
  
 # replace submitter name with hospitalreport field
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
