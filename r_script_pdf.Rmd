@@ -35,7 +35,7 @@ unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 | **Samples received within 2 days (GOAL: 95%)** | `r format(h$rec_in_2_days, big.mark=",", trim=TRUE)` | `r round(h$percent_rec_in_2_days, digits=2)`% | `r h$rank_percent_within_goal` of `r state$submitters` | `r round(state$percent_rec_in_2_days, digits=2) * 100`% |
 | &nbsp;&nbsp;&nbsp;&nbsp;Met goal? | `r ifelse(h$met_goal==1, 'No', 'Yes')`|  |  |  | 
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=4)*100`% | `r h$rank_early_collection` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=4)*100`%
-| **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_early_collection` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
+| **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_transfused` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% | 
  
 ```{r, echo=FALSE, results='markdown'}
