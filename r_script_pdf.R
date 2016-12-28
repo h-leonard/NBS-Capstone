@@ -104,6 +104,10 @@ hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$percent_rec_
 #     e.g., least number of early collections = #1)
 hospital_metrics$rank_early_collection <- rank(hospital_metrics$percent_less_than_24_hours, na.last="keep", ties.method="min")
  
+# Rank hospitals by number of samples transfused prior to collection (ascending order;
+#     e.g., least number of early collections = #1)
+hospital_metrics$rank_transfused <- rank(hospital_metrics$trans_percent, na.last="keep", ties.method="min")
+ 
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="keep", ties.method="min")
  
