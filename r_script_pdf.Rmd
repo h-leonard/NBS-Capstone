@@ -23,10 +23,10 @@ h_plot$SUBMITTERNAME <- 'Hospital'
 max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
 max_transit_h <- max(max_overall_transit, h_plot$avg_transit_time)
 bound <- rbind(h_plot, state_plot)
+unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 ```
  
- 
-|      | Hospital || Hospital Rank | Virginia |
+|      | Hospital || Hospital Rank* | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
 | **Number of samples submitted** | `r format(h$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
 | **Average transit time** | `r round(h$avg_transit_time, digits=2)` days |  | `r h$rank_transit` of `r state$submitters` | `r round(state$avg_transit_time, digits=2)` days |
@@ -40,7 +40,7 @@ bound <- rbind(h_plot, state_plot)
  
 ```{r, echo=FALSE, results='markdown'}
 # combine hospital's unsat counts with descriptions of codes
-temp_unsats <- as.data.frame(t(select(h, unsat_1:unsat_13)))
+temp_unsats <- as.data.frame(t(select(h, unsat_01:eval(as.name(unsat_max_col)))))
 names(temp_unsats) <- c('count')
 unsats_count <- cbind(unsats, temp_unsats)
  
