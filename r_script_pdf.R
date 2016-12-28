@@ -15,11 +15,11 @@ submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
 # read in data
 files <- list.files(data_path, pattern="*.txt")
 temp2 <- paste(data_path, "/", files, sep="")
-dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+initial_dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
  
 # remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
 remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-dd <- filter(dd, !(CATEGORY %in% remove_cats))
+dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))
  
 # reformat dates as dates
 dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
@@ -33,12 +33,17 @@ dd <- left_join(dd, submitters, by="SUBMITTERID")
 # replace submitter name with hospitalreport field
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
  
+# remove records that have NA for submittername and that are not in the target period
+dd <- dd[!is.na(dd$HOSPITALREPORT),]
+ 
+##############################
+ 
 # create data frame of required metrics for each submitter
-hospital_metrics <- dd[!is.na(dd$HOSPITALREPORT),] %>%
+hospital_metrics <- dd %>%
   group_by(SUBMITTERNAME) %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>% 
   select(SUBMITTERNAME, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   summarise(
     total_samples=n(),
     avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
@@ -55,21 +60,38 @@ hospital_metrics <- dd[!is.na(dd$HOSPITALREPORT),] %>%
     trans = sum(TRANSFUSED == 'Y'),
     trans_percent = trans/total_samples,
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples,
-    unsat_1 = ifelse(sum(UNSATCODE == 1, na.rm=TRUE) != 0, sum(UNSATCODE == 1, na.rm=TRUE), NA),
-    unsat_2 = ifelse(sum(UNSATCODE == 2, na.rm=TRUE) != 0, sum(UNSATCODE == 2, na.rm=TRUE), NA),
-    unsat_3 = ifelse(sum(UNSATCODE == 3, na.rm=TRUE) != 0, sum(UNSATCODE == 3, na.rm=TRUE), NA),
-    unsat_4 = ifelse(sum(UNSATCODE == 4, na.rm=TRUE) != 0, sum(UNSATCODE == 4, na.rm=TRUE), NA),
-    unsat_5 = ifelse(sum(UNSATCODE == 5, na.rm=TRUE) != 0, sum(UNSATCODE == 5, na.rm=TRUE), NA),
-    unsat_6 = ifelse(sum(UNSATCODE == 6, na.rm=TRUE) != 0, sum(UNSATCODE == 6, na.rm=TRUE), NA),
-    unsat_7 = ifelse(sum(UNSATCODE == 7, na.rm=TRUE) != 0, sum(UNSATCODE == 7, na.rm=TRUE), NA),
-    unsat_8 = ifelse(sum(UNSATCODE == 8, na.rm=TRUE) != 0, sum(UNSATCODE == 8, na.rm=TRUE), NA),
-    unsat_9 = ifelse(sum(UNSATCODE == 9, na.rm=TRUE) != 0, sum(UNSATCODE == 9, na.rm=TRUE), NA),
-    unsat_10 = ifelse(sum(UNSATCODE == 10, na.rm=TRUE) != 0, sum(UNSATCODE == 10, na.rm=TRUE), NA),
-    unsat_11 = ifelse(sum(UNSATCODE == 11, na.rm=TRUE) != 0, sum(UNSATCODE == 11, na.rm=TRUE), NA),
-    unsat_12 = ifelse(sum(UNSATCODE == 12, na.rm=TRUE) != 0, sum(UNSATCODE == 12, na.rm=TRUE), NA),
-    unsat_13 = ifelse(sum(UNSATCODE == 13, na.rm=TRUE) != 0, sum(UNSATCODE == 13, na.rm=TRUE), NA)
+    unsat_percent = unsat_count/total_samples
   )
+ 
+##### ADD UNSAT COUNTS #####
+ 
+# get count of unsat codes for each submitter
+unsat_prep <- dd[!is.na(dd$UNSATCODE),] %>% 
+  group_by(SUBMITTERNAME, UNSATCODE) %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+  summarise(count = n())  
+ 
+# get all possibilities for unsat codes
+unsat_seq <- seq(1:nrow(unsats))
+ 
+# create cross join of all possible unsat codes and all submitter names
+cross_join <- CJ(SUBMITTERNAME=unique(dd$SUBMITTERNAME), UNSATCODE=unsat_seq)
+ 
+# create left join of unsat counts and cross_join (so we have 0 counts
+# for each submitter that has no unsats for that particular code)
+unsat_amts <- left_join(cross_join, unsat_prep, by=c("SUBMITTERNAME", "UNSATCODE"))
+ 
+# replace UNSATCODE column with 'col' column
+unsat_amts$col <- paste("unsat_", str_pad(unsat_amts$UNSATCODE, 2, pad="0"), sep="")
+unsat_amts$UNSATCODE <- NULL
+ 
+# Reshape dataframe to have rows as SUBMITTERNAME and columns as col (e.g., unsat_01, unsat_02, etc.)
+unsats_ready <- dcast(unsat_amts, SUBMITTERNAME ~ col, value.var="count")
+ 
+# left join unsats_ready and hospital_metrics
+hospital_metrics <- left_join(hospital_metrics, unsats_ready, by="SUBMITTERNAME")
+ 
+############################
  
 # Rank hospitals by mean transit time (ascending order; e.g., least mean transit time = #1)
 hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time, na.last="keep", ties.method="min")
