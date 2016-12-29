@@ -9,14 +9,14 @@ title: `r submitter`
 date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
 ---
  
-```{r, include=FALSE, cache=FALSE, echo=FALSE}
+```{r, include=FALSE, cache=FALSE, echo=FALSE, message=FALSE}
 library(knitr)
 library(markdown)
 library(rmarkdown)
 ```
  
  
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 hospital_filt <- ungroup(hospital_metrics_plot)
 h_plot <- hospital_filt[hospital_filt$SUBMITTERNAME==submitter,]
@@ -39,7 +39,7 @@ unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_transfused` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% | 
  
-```{r, echo=FALSE, results='markdown'}
+```{r, echo=FALSE, results='markdown', message=FALSE}
 # combine hospital's unsat counts with descriptions of codes
 temp_unsats <- as.data.frame(t(select(h, unsat_01:eval(as.name(unsat_max_col)))))
 names(temp_unsats) <- c('count')
@@ -57,7 +57,7 @@ if (nrow(unsats_final) > 0) {
 ```
  
  
-```{r, fig.width=3.2, echo=FALSE}
+```{r, fig.width=3.2, echo=FALSE, message=FALSE, warning=FALSE}
  
 if (line_chart == 'quarterly') {
   
@@ -68,6 +68,7 @@ if (line_chart == 'quarterly') {
     labs(x="Quarter", y="Days") +
     ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
     geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     geom_hline(color="green4", aes(yintercept=2), size=2) +
     geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .18), 
@@ -87,6 +88,7 @@ if (line_chart == 'quarterly') {
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
     geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     theme(legend.title=element_blank()) +
     theme(legend.position="bottom") +
@@ -104,6 +106,7 @@ if (line_chart == 'quarterly') {
     labs(x="Month", y="Days") +
     ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
     geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     geom_hline(color="green4", aes(yintercept=2), size=2) +
     geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$MONTH)) + .18), y=min_overall_transit, label="Goal: under 2 days")) + 
@@ -122,6 +125,7 @@ if (line_chart == 'quarterly') {
     labs(x="Month", y="Percentage") +
     ggtitle(bquote(atop("Percentage of Unsatisfactory Samples", atop(italic(.(submitter)), "")))) +
     geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     theme(legend.title=element_blank()) +
     theme(legend.position="bottom") +
@@ -135,3 +139,4 @@ par(oma=c(2,4,4,2),mfrow=c(1,2))
 p1
 p2
 ```
+ 
