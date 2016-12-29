@@ -147,11 +147,11 @@ state$submitters <- tot_sub
 ##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
 if (line_chart == "quarterly") {
   quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
- 
-  # Filter dd to include one year of data (dated backwards from end date)
+  
+  # filter dd to include one year of data (dated backwards from end date)
   dd_plot <- filter(dd, BIRTHDATE > (quarter_end - years(1)) & 
-                    BIRTHDATE <= quarter_end, !is.na(HOSPITALREPORT))
- 
+                      BIRTHDATE <= quarter_end, !is.na(HOSPITALREPORT))  
+  
   # add quarter information to dd_plot
   dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
  
@@ -165,6 +165,20 @@ if (line_chart == "quarterly") {
       unsat_count = sum(!is.na(UNSATCODE)),
       unsat_percent = unsat_count/total_samples * 100
     )
+  
+  ## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR QUARTER IN THE DATE RANGE OF INTEREST
+  
+  # get a list of all quarters contained in the dataset
+  quarts <- unique(dd_plot$QUARTER)
+  
+  # create cross join of all possible quarters and all submitter names
+  cross_join_quarts <- CJ(SUBMITTERNAME=unique(dd_plot$SUBMITTERNAME), QUARTER=unique(dd_plot$QUARTER))
+  
+  # left join hospital_metrics_plot with cross_join_quarts so that we have NAs for hospitals 
+  # with no data for a particular quarter
+  hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_quarts, by=c("SUBMITTERNAME", "QUARTER"))
+  
+  #####
  
   # determine limits for y-axes by finding max for avg_transit_time
   # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
@@ -172,9 +186,9 @@ if (line_chart == "quarterly") {
   # use only the greatest value that is less than 10. 
   avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
   unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
-  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
-  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
+  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col], na.rm=TRUE)
+  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
+  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col], na.rm=TRUE)
  
   # Group by quarter for state totals (NOTE: this uses unweighted mean)
   state_plot <- dd_plot %>%
@@ -187,6 +201,7 @@ if (line_chart == "quarterly") {
       unsat_percent = unsat_count/total_samples * 100
     )
   state_plot$SUBMITTERNAME <- 'State'
+  
 }
   
 ##### CREATE DATA FRAMES FOR USE IN MONTH PLOTS #####
@@ -211,15 +226,29 @@ if (line_chart == "monthly") {
       unsat_percent = unsat_count/total_samples * 100
     )
   
+  ## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR MONTH IN THE DATE RANGE OF INTEREST
+  
+  # get a list of all quarters contained in the dataset
+  months <- unique(dd_plot$MONTH)
+  
+  # create cross join of all possible quarters and all submitter names
+  cross_join_months <- CJ(SUBMITTERNAME=unique(dd_plot$SUBMITTERNAME), MONTH=unique(dd_plot$MONTH))
+  
+  # left join hospital_metrics_plot with cross_join_months so that we have NAs for hospitals with
+  # no data for a particular month
+  hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_months, by=c("SUBMITTERNAME", "MONTH"))
+  
+  #####
+  
   # determine limits for y-axes by finding max for avg_transit_time
   # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
   # only the greatest value that is less than 4; for unsat percentage,
   # use only the greatest value that is less than 10. 
   avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
   unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col])
-  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time)
-  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col])
+  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col], na.rm=TRUE)
+  min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
+  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col], na.rm=TRUE)
   
   # Group by month for state totals (NOTE: this uses unweighted mean)
   state_plot <- dd_plot %>%
