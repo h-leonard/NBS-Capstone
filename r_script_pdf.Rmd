@@ -1,7 +1,6 @@
 ---
 output:
-  pdfdocument:
-    latexengine: xelatex
+  pdf_document
 always_allow_html: yes
 ---
 ---
@@ -9,12 +8,7 @@ title: `r submitter`
 date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
 ---
  
-```{r, include=FALSE, cache=FALSE, echo=FALSE, message=FALSE}
-library(knitr)
-library(markdown)
-library(rmarkdown)
-```
- 
+\pagenumbering{gobble}
  
 ```{r, echo=FALSE, message=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
@@ -37,7 +31,11 @@ unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 | &nbsp;&nbsp;&nbsp;&nbsp;Met goal? | `r ifelse(h$met_goal==1, 'No', 'Yes')`|  |  |  | 
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=4)*100`% | `r h$rank_early_collection` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=4)*100`%
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_transfused` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
-| **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% | 
+| **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% |
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    \* **Note**: Rank of #1 is best&nbsp;&nbsp; 
+ 
+&nbsp;&nbsp; 
  
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 # combine hospital's unsat counts with descriptions of codes
@@ -56,6 +54,7 @@ if (nrow(unsats_final) > 0) {
 }
 ```
  
+&nbsp;&nbsp;  
  
 ```{r, fig.width=3.2, echo=FALSE, message=FALSE, warning=FALSE}
  
@@ -139,4 +138,3 @@ par(oma=c(2,4,4,2),mfrow=c(1,2))
 p1
 p2
 ```
- 
