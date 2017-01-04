@@ -1,13 +1,14 @@
 ---
 output:
-  pdf_document
+    pdf_document:
+      includes:
+          in_header: header.tex
 always_allow_html: yes
 ---
 ---
 title: `r submitter`
 date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
 ---
- 
 \pagenumbering{gobble}
  
 ```{r, echo=FALSE, message=FALSE}
@@ -33,7 +34,7 @@ unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=4)*100`% |  `r h$rank_transfused` of `r state$submitters`  |  `r round(state$trans_percent, digits=4)*100`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=4)*100`% | `r h$rank_unsats` of `r state$submitters`  | `r round(state$unsat_percent, digits=4)*100`% |
  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    \* **Note**: Rank of #1 is best&nbsp;&nbsp; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    \* **Note**: Lower numbers indicate higher ranks&nbsp;&nbsp;  
  
 &nbsp;&nbsp; 
  
