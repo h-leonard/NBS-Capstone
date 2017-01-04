@@ -186,10 +186,10 @@ if (line_chart == "quarterly") {
   # use only the greatest value that is less than 10. 
   avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
   unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col], na.rm=TRUE)
+  max_overall_transit <- quantile(hospital_metrics_plot$avg_transit_time, .98, na.rm=TRUE)
   min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
-  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col], na.rm=TRUE)
- 
+  max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
+  
   # Group by quarter for state totals (NOTE: this uses unweighted mean)
   state_plot <- dd_plot %>%
     group_by(QUARTER) %>%
@@ -246,9 +246,9 @@ if (line_chart == "monthly") {
   # use only the greatest value that is less than 10. 
   avg_transit_col <- grep("avg_transit_time", colnames(hospital_metrics_plot))
   unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  max_overall_transit <- max(hospital_metrics_plot[hospital_metrics_plot$avg_transit_time < 4, avg_transit_col], na.rm=TRUE)
+  max_overall_transit <- quantile(hospital_metrics_plot$avg_transit_time, .98, na.rm=TRUE)
   min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
-  max_overall_unsat <- max(hospital_metrics_plot[hospital_metrics_plot$unsat_percent < 10, unsat_percent_col], na.rm=TRUE)
+  max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
   
   # Group by month for state totals (NOTE: this uses unweighted mean)
   state_plot <- dd_plot %>%
