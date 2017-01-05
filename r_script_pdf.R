@@ -51,21 +51,21 @@ hospital_metrics <- dd %>%
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
   summarise(
     total_samples=n(),
-    avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
-    min_transit_time = min(TRANSIT_TIME, na.rm=TRUE),
-    max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
-    rec_in_2_days = sum(TRANSIT_TIME <= 2, na.rm=TRUE),
-    percent_rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
-                           sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA) * 100,
+    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
+    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
     met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
-    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
-                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=TRUE),
-    percent_less_than_24_hours = ifelse(!is.infinite(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
-                                        col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
+    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
+                                 na.rm=TRUE),
+    percent_less_than_24_hours = col_less_than_24_hours/sum(RECALL_FLAG == "N" & TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
     trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples,
+    trans_percent = trans/total_samples * 100,
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples
+    unsat_percent = unsat_count/total_samples * 100
   )
 
 ##### ADD UNSAT COUNTS #####
@@ -119,31 +119,21 @@ hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="ke
 # Determine number of hospitals
 tot_sub <- nrow(hospital_metrics)
 
-# Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
-# than running all reports)
-if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
-
 # Create metrics for state
-state <- dd %>%
-  select(TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
-         UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+state <- hospital_metrics %>%
   summarise(
-    total_samples=n(),
-    avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
-    min_transit_time = min(TRANSIT_TIME, na.rm=TRUE),
-    max_transit_time = max(TRANSIT_TIME, na.rm=TRUE),
-    rec_in_2_days = sum(TRANSIT_TIME <= 2, na.rm=TRUE),
-    percent_rec_in_2_days = ifelse(!is.nan(sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME))), 
-                           sum(TRANSIT_TIME <= 2, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME)), NA),
-    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE | 
-                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME, na.rm=T),
-    percent_less_than_24_hours = ifelse(!is.infinite(col_less_than_24_hours/sum(RECALL_FLAG == "N")),
-                                        col_less_than_24_hours/sum(RECALL_FLAG == "N"), NA),
-    trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples,
-    unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples
+    total_samples=sum(total_samples, na.rm=TRUE),
+    avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+    min_transit_time = min(min_transit_time, na.rm=TRUE),
+    max_transit_time = max(max_transit_time, na.rm=TRUE),
+    rec_in_2_days = sum(rec_in_2_days, na.rm=TRUE),
+    percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    col_less_than_24_hours = sum(col_less_than_24_hours, na.rm=TRUE),
+    percent_less_than_24_hours = mean(percent_less_than_24_hours, na.rm=TRUE),
+    trans = sum(trans, na.rm=TRUE),
+    trans_percent = mean(trans_percent, na.rm=TRUE),
+    unsat_count = sum(unsat_count, na.rm=TRUE),
+    unsat_percent = mean(unsat_percent, na.rm=TRUE)
   )
 
 # Add number of hospitals to state df
@@ -166,7 +156,7 @@ if (line_chart == "quarterly") {
     select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, QUARTER) %>%
     summarise(
       total_samples=n(),   
-      avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+      avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
       unsat_count = sum(!is.na(UNSATCODE)),
       unsat_percent = unsat_count/total_samples * 100
     )
@@ -195,15 +185,14 @@ if (line_chart == "quarterly") {
   min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
   max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
   
-  # Group by quarter for state totals (NOTE: this uses unweighted mean)
-  state_plot <- dd_plot %>%
+  # Group by quarter for state totals
+  state_plot <- hospital_metrics_plot %>%
     group_by(QUARTER) %>%
-    select(QUARTER, TRANSIT_TIME, UNSATCODE) %>%
     summarise(
-      total_samples=n(),   
-      avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
-      unsat_count =  sum(!is.na(UNSATCODE)),
-      unsat_percent = unsat_count/total_samples * 100
+      total_samples = sum(total_samples, na.rm=TRUE),   
+      avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+      unsat_count = sum(unsat_count, na.rm=TRUE),
+      unsat_percent = mean(unsat_percent, na.rm=TRUE)
     )
   state_plot$SUBMITTERNAME <- 'State'
   
@@ -226,7 +215,7 @@ if (line_chart == "monthly") {
     select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, MONTH) %>%
     summarise(
       total_samples=n(),   
-      avg_transit_time = ifelse(!is.nan(mean(TRANSIT_TIME, na.rm=TRUE)), mean(TRANSIT_TIME, na.rm=TRUE), NA),
+      avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
       unsat_count = sum(!is.na(UNSATCODE)),
       unsat_percent = unsat_count/total_samples * 100
     )
@@ -255,20 +244,23 @@ if (line_chart == "monthly") {
   min_overall_transit <- min(hospital_metrics_plot$avg_transit_time, na.rm=TRUE)
   max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
   
-  # Group by month for state totals (NOTE: this uses unweighted mean)
-  state_plot <- dd_plot %>%
+  # Group by month for state totals
+  state_plot <- hospital_metrics_plot %>%
     group_by(MONTH) %>%
-    select(MONTH, TRANSIT_TIME, UNSATCODE) %>%
     summarise(
-      total_samples=n(),   
-      avg_transit_time = mean(TRANSIT_TIME, na.rm=TRUE),
-      unsat_count =  sum(!is.na(UNSATCODE)),
-      unsat_percent = unsat_count/total_samples * 100
+      total_samples = sum(total_samples, na.rm=TRUE),   
+      avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+      unsat_count = sum(unsat_count, na.rm=TRUE),
+      unsat_percent = mean(unsat_percent, na.rm=TRUE)
     )
   state_plot$SUBMITTERNAME <- 'State'
 }
 
 #######################################################
+
+# Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
+# than running all reports)
+if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
 
 # Generate report for each hospital
 render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
