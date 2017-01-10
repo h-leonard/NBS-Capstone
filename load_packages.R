@@ -2,16 +2,24 @@
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
 
-suppressPackageStartupMessages(require('XLConnect'))
-suppressPackageStartupMessages(require('xtable'))
-suppressPackageStartupMessages(require('data.table'))
-suppressPackageStartupMessages(require('stringr'))
-suppressPackageStartupMessages(require('reshape2'))
-suppressPackageStartupMessages(require('knitr'))
-suppressPackageStartupMessages(require('markdown'))
-suppressPackageStartupMessages(require('zoo'))
-suppressPackageStartupMessages(require('ggplot2'))
-suppressPackageStartupMessages(require('reshape'))
-suppressPackageStartupMessages(require('lubridate'))
-suppressPackageStartupMessages(require('dplyr'))
-suppressPackageStartupMessages(require('shiny'))
+libs <- c('XLConnect', 
+              'xtable',
+              'data.table',
+              'stringr',
+              'reshape2',
+              'knitr',
+              'markdown',
+              'zoo',
+              'ggplot2',
+              'grid',
+              'reshape',
+              'lubridate',
+              'dplyr',
+              'shiny')
+
+for (l in libs) {
+  if(!is.element(l, .packages(all.available = TRUE)) ) {
+    install.packages(l)
+  }
+  suppressPackageStartupMessages(library(l, character.only=TRUE))
+}
