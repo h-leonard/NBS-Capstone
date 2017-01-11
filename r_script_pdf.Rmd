@@ -1,8 +1,6 @@
 ---
 output:
-    pdf_document:
-      includes:
-          in_header: header.tex
+    pdf_document
 always_allow_html: yes
 ---
 ---
@@ -10,18 +8,18 @@ title: `r submitter`
 date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
 ---
 \pagenumbering{gobble}
-
+ 
 ```{r, echo=FALSE, message=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 hospital_filt <- ungroup(hospital_metrics_plot)
 h_plot <- hospital_filt[hospital_filt$SUBMITTERNAME==submitter,]
 h_plot$SUBMITTERNAME <- 'Hospital'
 max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
-max_transit_h <- max(max_overall_transit, h_plot$avg_transit_time)
+min_transit_h <- min(min_transit_percent, h_plot$percent_rec_in_2_days)
 bound <- rbind(h_plot, state_plot)
 unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 ```
-
+ 
 |      | Hospital || Hospital Rank | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
 | **Number of samples submitted** | `r format(h$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
@@ -33,18 +31,18 @@ unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=2)`% | `r toOrdinal(h$rank_early_collection)` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=2)`%
 | **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=2)`% |  `r toOrdinal(h$rank_transfused)` of `r state$submitters`  |  `r round(state$trans_percent, digits=2)`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=2)`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r round(state$unsat_percent, digits=2)`% |
-
+ 
 &nbsp;&nbsp; 
-
+ 
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 # combine hospital's unsat counts with descriptions of codes
 temp_unsats <- as.data.frame(t(select(h, unsat_01:eval(as.name(unsat_max_col)))))
 names(temp_unsats) <- c('count')
 unsats_count <- cbind(unsats, temp_unsats)
-
+ 
 # remove all rows with NA for counts
 unsats_final <- unsats_count[!is.na(unsats_count$count),]
-
+ 
 # show unsat counts for each category if unsats_final has more than 0 observations
 if (nrow(unsats_final) > 0) {
   unsats_final <- unsats_final[,2:3]
@@ -52,26 +50,25 @@ if (nrow(unsats_final) > 0) {
   kable(unsats_final, row.names=FALSE)
 }
 ```
-
+ 
 &nbsp;&nbsp;  
-
+ 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# fig.width=3.2
-
+ 
 if (line_chart == 'quarterly') {
   
-  # Plot average transit time over past 4 quarters
-  p1 <- ggplot(bound, aes(x=QUARTER, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+  # Plot percentage of samples received within 2 days over past 4 quarters
+  p1 <- ggplot(bound, aes(x=QUARTER, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
     scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25), format = "%Y Q%q") +
-    scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
-    labs(x="Quarter", y="Days") +
-    ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
+    scale_y_continuous(limits=c(min_transit_h, 100)) +
+    labs(x="Quarter", y="Percentage") +
+    ggtitle(bquote(atop("Samples Received within Two Days", atop(italic(.(submitter)), "")))) + 
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
+    geom_hline(color="green4", aes(yintercept=95), size=1) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .2), 
+                                          y=93, label="Goal: 95% of samples", vjust=1)) + 
     scale_color_manual(values=c("blue","grey59")) +
-    geom_hline(color="green4", aes(yintercept=2), size=2) +
-    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .18), 
-              y=min_overall_transit, label="Goal: under 2 days")) + 
     theme(legend.title=element_blank()) + 
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
@@ -97,24 +94,24 @@ if (line_chart == 'quarterly') {
   
 } else {
   
-  # Plot average transit time over past 12 months
-  p1 <- ggplot(bound, aes(x=MONTH, y=avg_transit_time, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+   # Plot percentage of samples received within 2 days over past 12 months
+   p1 <- ggplot(bound, aes(x=MONTH, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
     scale_x_yearmon(breaks = seq(from = min(bound$MONTH), to = max(bound$MONTH), by = 0.25),
                   format = "%b %Y") +
-    scale_y_continuous(limits=c(min_overall_transit, max_transit_h)) +
-    labs(x="Month", y="Days") +
-    ggtitle(bquote(atop("Average Transit Time", atop(italic(.(submitter)), "")))) + 
+    scale_y_continuous(limits=c(min_transit_h, 100)) +
+    labs(x="Month", y="Percentage") +
+    ggtitle(bquote(atop("Samples Received within Two Days", atop(italic(.(submitter)), "")))) + 
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
-    geom_hline(color="green4", aes(yintercept=2), size=2) +
-    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$MONTH)) + .18), y=min_overall_transit, label="Goal: under 2 days")) + 
+    geom_hline(color="green4", aes(yintercept=95), size=1) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$MONTH)) + .25), y=93, label="Goal: 95% of samples", vjust=1)) + 
     theme(legend.title=element_blank()) + 
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
     theme(plot.title = element_text(size = 10, face = "bold")) +
     theme(plot.margin = unit(c(0.3,0.5,0.3,0.3), "cm"))
-
+ 
 # Plot percentage of unsatisfactory samples over past 12 months
   p2 <- ggplot(bound, aes(x=MONTH, y=unsat_percent, colour=SUBMITTERNAME, 
                   group=rev(SUBMITTERNAME))) +
@@ -132,9 +129,9 @@ if (line_chart == 'quarterly') {
     theme(plot.title = element_text(size = 10, face = "bold")) +
     theme(plot.margin = unit(c(0.3,0.3,0.3,0.5), "cm"))
 }
-
+ 
 pushViewport(viewport(layout = grid.layout(1, 2)))
 print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
-
+ 
 ```
