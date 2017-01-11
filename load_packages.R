@@ -15,7 +15,8 @@ libs <- c('XLConnect',
               'reshape',
               'lubridate',
               'dplyr',
-              'shiny')
+              'shiny',
+              'toOrdinal')
 
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
