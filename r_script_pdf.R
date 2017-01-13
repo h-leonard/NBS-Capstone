@@ -13,17 +13,17 @@ names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
 # prepare to read in data
-files <- list.files(data_path)
-temp2 <- paste(data_path, "/", files, sep="")
+files <- list.files(sample_data_path)
+temp2 <- paste(sample_data_path, "/", files, sep="")
  
 # find out what type of data files we have by getting the file (assumes all data files are same file type)
-data_type <- substr(list.files(data_path)[1], as.numeric(regexpr("\\.([[:alnum:]]+)$", list.files(data_path)[1])[1]), nchar(list.files(data_path)[1]))
+data_type <- substr(files[1], as.numeric(regexpr("\\.([[:alnum:]]+)$", files[1])[1]), nchar(files[1]))
  
 # read in data using different methods depending on what type of data files we have (e.g., .xls vs. .txt)
 if (data_type == ".xlsx" | data_type == ".xls") {
   initial_dd <- do.call(rbind, lapply(temp2, function(x) readWorksheet(loadWorkbook(x), sheet = 1, header=TRUE)))
 } else {
-  initial_dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, sep=separator)))
+  initial_dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator)))
 }
  
 # remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
@@ -268,7 +268,7 @@ if (line_chart == "monthly") {
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
  
 # Generate report for each hospital
-render_file <- paste(wd, "/", "r_script_pdf.Rmd", sep="")
+render_file <- paste(wd, "/", "main_report_markdown.Rmd", sep="")
  
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
