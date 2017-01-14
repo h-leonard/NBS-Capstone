@@ -7,20 +7,25 @@ wd <- "r_files"
 
 #########
 
-# DATA FILE PATH
+# SAMPLE DATA FILE PATH
 # This should be your directory (e.g., the location on your 
-# computer) where you have the data stored
+# computer) where you have the SAMPLE data stored. 
+# **VERY IMPORTANT**: make sure that you ONLY have the sample data
+# files you want to read in at this location, and that all of them are in the 
+# same exact format (e.g., xlsx, xls, txt, or csv).
 
-data_path <- "data"
+sample_data_path <- "data/Report_data"
 
 #########
 
-# DATA FILE TYPE
-# Enter the extension for your data file (e.g., txt, xls, xlsx, or csv).
-# Currently, only .txt, .csv, .xls, and .xlsx files are supported, although
-# this can be changed if needed.
+# DIAGNOSIS DATA FILE PATH
+# This should be your directory (e.g., the location on your 
+# computer) where you have the DIAGNOSIS data stored. 
+# **VERY IMPORTANT**: make sure that you ONLY have the diagnosis data
+# files you want to read in at this location, and that all of them are in the 
+# same exact format (e.g., xlsx, xls, txt, or csv).
 
-data_type <- "txt"
+diag_data_path <- "data/Diagnosis_data"
 
 #########
 
@@ -63,7 +68,7 @@ end_date <- "09/30/2016"
 # Enter "quarterly" or "monthly" to define the parameters 
 # for the line chart for transit time and unsat count 
 
-line_chart <- "monthly"
+line_chart <- "quarterly"
 
 #########
 
@@ -72,12 +77,14 @@ line_chart <- "monthly"
 # or do you want reports for all submitters? Enter "Y" if you wish to run
 # only a single report, "N" otherwise
 
-test_report <- "Y"
+test_report <- "N"
 
 #########
 
 # RUN REPORT - do not change this code
 load_packages <- paste(wd, "/", "load_packages.R", sep="")
-run_file <- paste(wd, "/", "r_script_pdf.R", sep="")
+report_run <- paste(wd, "/", "main_report_generator.R", sep="")
+diag_run <- paste(wd, "/", "diagnosis_report_generator.R", sep="")
 source(load_packages)
-source(run_file)
+source(report_run)
+source(diag_run)
