@@ -17,7 +17,8 @@ libs <- c('XLConnect',
           'dplyr',
           'pander',
           'shiny',
-          'toOrdinal')
+          'toOrdinal',
+          'mailR')
  
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
