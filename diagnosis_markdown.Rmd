@@ -17,6 +17,7 @@ Diagnosis Date Range: `r dates`
 diag_sub <- diag_info[diag_info$SUBMITTERNAME == submitter, 2:4]
 names(diag_sub) <- c("Diagnosis", "Count", "Description")
  
-# show counts for each description
-kable(diag_sub, row.names=FALSE)
+# show counts and description for each diagnosis
+pander("keep.line.breaks")
+pander(diag_sub, row.names=FALSE, justify="left")
 ```
