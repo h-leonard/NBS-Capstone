@@ -2,6 +2,10 @@
 diag_desc <- read.csv(paste(codes_path, "/", "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
 diag_desc <- diag_desc[,2:3]
  
+# read in individual messages to hospitals to be included in report
+messages <- read.csv(paste(codes_path, "/", "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
+messages <- messages[messages$Message != "",]
+ 
 # prepare to read in data
 files_diag <- list.files(diag_data_path)
 temp_diag <- paste(diag_data_path, "/", files_diag, sep="")
