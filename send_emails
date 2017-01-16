@@ -11,7 +11,7 @@ password <- **ADD PASSWORD HERE**
 subject <- "Quarterly Report from DCLS: 7/1/2016 - 9/30/2016"
 message <- "Please find attached the brand-spanking new report!"
  
-for (i in nrow(emails)) {
+for (i in 1:nrow(emails)) {
   attachments <- paste(output_path, "/",
                        list.files(output_path, 
                                   pattern=paste(emails$Hospital[i], "*", sep="")), sep="")
