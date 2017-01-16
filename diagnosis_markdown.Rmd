@@ -6,18 +6,17 @@ always_allow_html: yes
 ---
 title: Diagnosed Cases through Newborn Screening at `r I(submitter)`
 ---
- 
+
 \begin{center}
 This report is a summary of disorders affecting babies born at your facility. These babies benefited from timely diagnosis and treatment due to your vigilance in Newborn Screening. Please share this with the staff to remind them that Newborn Screening Saves Lives!
- 
+
 Diagnosis Date Range: `r dates`
 \end{center}
- 
+
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 diag_sub <- diag_info[diag_info$SUBMITTERNAME == submitter, 2:4]
 names(diag_sub) <- c("Diagnosis", "Count", "Description")
- 
+
 # show counts and description for each diagnosis
-pander("keep.line.breaks")
-pander(diag_sub, row.names=FALSE, justify="left")
+pander(diag_sub, row.names = FALSE, justify = "left", split.cells = c(20, 1, 50), split.table = Inf)
 ```
