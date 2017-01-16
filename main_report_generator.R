@@ -276,8 +276,3 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
                     output_file = paste(submitter, "_", Sys.Date(), ".pdf", sep=''),
                     output_dir = output_path)
 }
- 
-# Remove variables from environment
-# keep = 'dd'
-# keep = ''
-# rm(list=setdiff(ls(), keep))
