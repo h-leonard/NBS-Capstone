@@ -85,3 +85,7 @@ read_data <- function(folder, ...) {
   return(initial_dd)
   
 }
+ 
+# Reformat start date and end date as dates
+start_date <- as.Date(start_date, "%m/%d/%Y")
+end_date <- as.Date(end_date, "%m/%d/%Y")
