@@ -55,9 +55,12 @@ get_file_extension <- function(folder) {
   
 }
  
-read_sample_data <- function(folder) {
+read_data <- function(folder, ...) {
   
-  # Returns dataframe of sample data with correct formatting
+  # Returns dataframe of data. Optional arguments are columns to be reformatted as dates.
+  
+  # Make list of columns to be reformatted as dates
+  date_reformat = list(...)
   
   # Get file list
   temp <- get_file_list(folder)
@@ -72,14 +75,13 @@ read_sample_data <- function(folder) {
     initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator)))
   }
   
-  # remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
-  remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-  dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))
-  
   # reformat dates as dates
-  dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
-  dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y", origin = "1904-01-01")
+  if (!is.null(date_reformat)) {
+    for (i in date_reformat) {
+      initial_dd[,i] <- as.Date(initial_dd[,i], "%m/%d/%Y", origin = "1904-01-01")
+    }
+  }
   
-  return(dd)
+  return(initial_dd)
   
 }
