@@ -12,10 +12,6 @@ submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
-# reformat dates as dates
-start_date <- as.Date(start_date, "%m/%d/%Y")
-end_date <- as.Date(end_date, "%m/%d/%Y")
- 
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
 initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
  
@@ -273,8 +269,8 @@ summary_report[is.na(summary_report)] <- 0
 summary_report$`Met 95% of Samples Received within 2 Days Goal?` <- 
   ifelse(summary_report$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
  
-# Write to csv for now - ultimately want to write to Excel
-write.csv(summary_report, paste0(summary_path, "/summary.csv"))
+# Write to csv for now - may ultimately want to write to Excel
+write.csv(summary_report, paste0(admin_path, "/summary.csv"))
  
 #######################################################
  
@@ -289,5 +285,5 @@ for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
                     output_format = "pdf_document",
                     output_file = paste(submitter, "_", Sys.Date(), ".pdf", sep=''),
-                    output_dir = output_path)
+                    output_dir = hospital_path)
 }
