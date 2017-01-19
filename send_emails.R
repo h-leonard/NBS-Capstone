@@ -7,8 +7,8 @@ emails <- read.csv("/Users/chrispatrick/Documents/Classes/Fall 2016/DS 6001/Newb
 # remove rows with no email addresses
 emails <- emails[emails$Email != "",]
 
-sender <- "newbornscreeninguva@gmail.com"
-password <- "O8@H$0P3T4N9gGwRt7Qo"
+sender <- ** ADD EMAIL HERE **
+password <- ** ADD PASSWORD HERE **
 subject <- "Quarterly Report from DCLS: 7/1/2016 - 9/30/2016"
 message <- "Hi,\n\nPlease find attached the new hospital report card from the Division of Consolidated Laboratory Services. If your hospital had any diagnoses for the given period, you will also find a diagnosis report attached.\n\nSincerely,\nDCLS"
 
