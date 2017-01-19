@@ -12,29 +12,12 @@ submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
-# prepare to read in data
-files <- list.files(sample_data_path)
-temp2 <- paste(sample_data_path, "/", files, sep="")
- 
-# find out what type of data files we have by getting the file (assumes all data files are same file type)
-data_type <- substr(files[1], as.numeric(regexpr("\\.([[:alnum:]]+)$", files[1])[1]), nchar(files[1]))
- 
-# read in data using different methods depending on what type of data files we have (e.g., .xls vs. .txt)
-if (data_type == ".xlsx" | data_type == ".xls") {
-  initial_dd <- do.call(rbind, lapply(temp2, function(x) readWorksheet(loadWorkbook(x), sheet = 1, header=TRUE)))
-} else {
-  initial_dd <- do.call(rbind, lapply(temp2, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator)))
-}
- 
-# remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
-remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))
- 
 # reformat dates as dates
-dd$COLLECTIONDATE <- as.Date(dd$COLLECTIONDATE, "%m/%d/%Y", origin = "1904-01-01")
-dd$BIRTHDATE <- as.Date(dd$BIRTHDATE, "%m/%d/%Y", origin = "1904-01-01")
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
+ 
+# read in sample data
+dd <- read_sample_data(sample_data_path)
  
 # add hospitalreport name to dd
 dd <- left_join(dd, submitters, by="SUBMITTERID")
