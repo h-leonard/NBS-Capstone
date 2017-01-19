@@ -9,7 +9,7 @@ emails <- emails[emails$Email != "",]
 sender <- **ADD EMAIL HERE**
 password <- **ADD PASSWORD HERE**
 subject <- "Quarterly Report from DCLS: 7/1/2016 - 9/30/2016"
-message <- "Please find attached the brand-spanking new report!"
+message <- "Hi,\n\nPlease find attached the new hospital report card from the Division of Consolidated Laboratory Services. If your hospital had any diagnoses for the given period, you will also find a diagnosis report attached.\n\nSincerely,\nDCLS"
  
 for (i in 1:nrow(emails)) {
   attachments <- paste(output_path, "/",
