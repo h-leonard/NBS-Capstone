@@ -17,7 +17,6 @@ h_plot$SUBMITTERNAME <- 'Hospital'
 max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
 min_transit_h <- min(min_transit_percent, h_plot$percent_rec_in_2_days)
 bound <- rbind(h_plot, state_plot)
-unsat_max_col <- paste("unsat_", nrow(unsats), sep="")
 title1 = "Percentage of Samples Received\n    within Two Days of Collection"
 title2 = "        Percentage of Samples That Were\nUnsatisfactory (Requiring Repeat Collection)"
 ```
@@ -35,19 +34,18 @@ title2 = "        Percentage of Samples That Were\nUnsatisfactory (Requiring Rep
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=2)`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r round(state$unsat_percent, digits=2)`% |
  
 ```{r, echo=FALSE, results='markdown', message=FALSE}
-# combine hospital's unsat counts with descriptions of codes
-temp_unsats <- as.data.frame(t(select(h, unsat_01:eval(as.name(unsat_max_col)))))
-names(temp_unsats) <- c('count')
-unsats_count <- cbind(unsats, temp_unsats)
+# create table of unsat counts for hospital
+temp_unsats <- as.data.frame(t(select(h, eval(as.name(as.character(unsats$description[1]))):eval(as.name(as.character(unsats$description[nrow(unsats)]))))))
+temp_unsats$Type <- row.names(temp_unsats)
+temp_unsats <- temp_unsats[,c(2,1)]
+names(temp_unsats) <- c('Type','Count')
  
 # remove all rows with NA for counts
-unsats_final <- unsats_count[!is.na(unsats_count$count),]
+unsats_final <- temp_unsats[!is.na(temp_unsats$Count),]
  
 # show unsat counts for each category if unsats_final has more than 0 observations
 if (nrow(unsats_final) > 0) {
-  unsats_final <- unsats_final[,2:3]
-  names(unsats_final) <- c('Unsatisfactory Samples','Count')
-  kable(unsats_final, row.names=FALSE)
+  kable(unsats_final, row.names=FALSE, col.names=c('Unsatisfactory Samples','Count'))
 }
 ```
  
