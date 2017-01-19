@@ -64,7 +64,7 @@ hospital_metrics <- dd %>%
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
     percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
       sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
-    met_goal = ifelse(rec_in_2_days >= 0.95, 1, 0),
+    met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
@@ -75,35 +75,7 @@ hospital_metrics <- dd %>%
     unsat_percent = unsat_count/total_samples * 100
   )
  
-##### ADD UNSAT COUNTS #####
- 
-# get count of unsat codes for each submitter
-unsat_prep <- dd[!is.na(dd$UNSATCODE),] %>% 
-  group_by(SUBMITTERNAME, UNSATCODE) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
-  summarise(count = n())  
- 
-# get all possibilities for unsat codes
-unsat_seq <- seq(1:nrow(unsats))
- 
-# create cross join of all possible unsat codes and all submitter names
-cross_join <- CJ(SUBMITTERNAME=unique(dd$SUBMITTERNAME), UNSATCODE=unsat_seq)
- 
-# create left join of unsat counts and cross_join (so we have 0 counts
-# for each submitter that has no unsats for that particular code)
-unsat_amts <- left_join(cross_join, unsat_prep, by=c("SUBMITTERNAME", "UNSATCODE"))
- 
-# replace UNSATCODE column with 'col' column
-unsat_amts$col <- paste("unsat_", str_pad(unsat_amts$UNSATCODE, 2, pad="0"), sep="")
-unsat_amts$UNSATCODE <- NULL
- 
-# Reshape dataframe to have rows as SUBMITTERNAME and columns as col (e.g., unsat_01, unsat_02, etc.)
-unsats_ready <- dcast(unsat_amts, SUBMITTERNAME ~ col, value.var="count")
- 
-# left join unsats_ready and hospital_metrics
-hospital_metrics <- left_join(hospital_metrics, unsats_ready, by="SUBMITTERNAME")
- 
-############################
+##### ADD RANKINGS #####
  
 # Rank hospitals by mean transit time (ascending order; e.g., least mean transit time = #1)
 hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time, na.last="keep", ties.method="min")
@@ -122,6 +94,39 @@ hospital_metrics$rank_transfused <- rank(hospital_metrics$trans_percent, na.last
  
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="keep", ties.method="min")
+ 
+##### ADD UNSAT COUNTS #####
+ 
+# get count of unsat codes for each submitter
+unsat_prep <- dd[!is.na(dd$UNSATCODE),] %>% 
+  group_by(SUBMITTERNAME, UNSATCODE) %>%
+  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+  summarise(count = n())  
+ 
+# get all possibilities for unsat codes
+unsat_seq <- seq(1:nrow(unsats))
+ 
+# create cross join of all possible unsat codes and all submitter names
+cross_join <- CJ(SUBMITTERNAME=unique(dd$SUBMITTERNAME), UNSATCODE=unsat_seq)
+ 
+# create left join of unsat counts and cross_join (so we have NAs
+# for each submitter that has no unsats for that particular code)
+unsat_amts <- left_join(cross_join, unsat_prep, by=c("SUBMITTERNAME", "UNSATCODE"))
+ 
+# replace UNSATCODE column with 'col' column
+unsat_amts$col <- paste("unsat_", str_pad(unsat_amts$UNSATCODE, 2, pad="0"), sep="")
+unsat_amts$UNSATCODE <- NULL
+ 
+# Reshape dataframe to have rows as SUBMITTERNAME and columns as col (e.g., unsat_01, unsat_02, etc.)
+unsats_ready <- dcast(unsat_amts, SUBMITTERNAME ~ col, value.var="count")
+ 
+# Replace column names (unsat_01, etc.) with unsat descriptions
+names(unsats_ready) <- c('SUBMITTERNAME', unlist(as.list(as.character(unsats$description), sorted = FALSE)))
+ 
+# left join unsats_ready and hospital_metrics
+hospital_metrics <- left_join(hospital_metrics, unsats_ready, by="SUBMITTERNAME")
+ 
+############################
  
 # Determine number of hospitals
 tot_sub <- nrow(hospital_metrics)
@@ -260,6 +265,29 @@ if (line_chart == "monthly") {
     )
   state_plot$SUBMITTERNAME <- 'State'
 }
+ 
+##### PREPARE SUMMARY REPORT #####
+ 
+# Reorganize and rename columns
+summary_report <- hospital_metrics[,c(1:3,15,4:7,16,8:10,17,11:12,18,13:14,19:32)]
+summary_cols <- c("Submitter Name", "Sample Count", "Avg. Transit Time", "Rank: Transit Time",
+                  "Min. Transit Time", "Max. Transit Time", "Received within 2 Days", 
+                  "% Recevied within 2 Days","Rank: Received within 2 Days",
+                  "Met 95% of Samples Received within 2 Days Goal?", "< 24 Hours", 
+                  "% < 24 Hours", "Rank: < 24 Hours", "Transfused", "% Transfused", 
+                  "Rank: Transfused", "Unsat Count", "Unsat %", "Rank: Unsats", 
+                  paste("Unsat:", unlist(as.list(as.character(unsats$description), sorted = FALSE))))
+names(summary_report) <- summary_cols
+ 
+# Replace NAs with 0s
+summary_report[is.na(summary_report)] <- 0
+ 
+# Change 0s to 'NO' and 1s to 'YES' for met goal
+summary_report$`Met 95% of Samples Received within 2 Days Goal?` <- 
+  ifelse(summary_report$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
+ 
+# Write to csv for now - ultimately want to write to Excel
+write.csv(summary_report, paste0(summary_path, "/summary.csv"))
  
 #######################################################
  
