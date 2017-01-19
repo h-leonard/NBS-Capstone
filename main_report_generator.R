@@ -16,8 +16,12 @@ submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
  
-# read in sample data
-dd <- read_sample_data(sample_data_path)
+# read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
+initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
+ 
+# remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
+remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
+dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))
  
 # add hospitalreport name to dd
 dd <- left_join(dd, submitters, by="SUBMITTERID")
