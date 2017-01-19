@@ -44,7 +44,7 @@ for (submitter in diagnoses$SUBMITTERNAME){
   rmarkdown::render(input = render_file_diag, 
                     output_format = "pdf_document",
                     output_file = paste(submitter, "_DiagnosisReport_", Sys.Date(), ".pdf", sep=''),
-                    output_dir = output_path)
+                    output_dir = hospital_path)
 }
  
 # Remove variables from environment
