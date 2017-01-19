@@ -51,15 +51,15 @@ codes_path <- "submitter_and_unsat_codes"
 # Enter the location on your computer where you want the hospital
 # reports to be saved
  
-output_path <- "/mnt/reports"
+hospital_path <- "/mnt/hospital_reports"
  
 ########
  
-# SUMMARY REPORT OUTPUT DIRECTORY (FOR DCLS)
-# Enter the location on your computer where you want the summary
+# ADMINISTRATIVE REPORT OUTPUT DIRECTORY (FOR DCLS)
+# Enter the location on your computer where you want administrative
 # reports to be saved
  
-summary_path <- "/mnt/summary"
+admin_path <- "/mnt/admin_reports"
  
 ########
  
@@ -89,10 +89,22 @@ test_report <- "N"
  
 #########
  
-# RUN REPORT - do not change this code
-load_packages <- paste(wd, "/", "load_packages.R", sep="")
-report_run <- paste(wd, "/", "main_report_generator.R", sep="")
-diag_run <- paste(wd, "/", "diagnosis_report_generator.R", sep="")
+# *** DO NOT CHANGE THIS CODE ***
+ 
+# LOAD PACKAGES AND FUNCTIONS
+load_packages <- paste0(wd, "/load_packages_and_functions.R")
 source(load_packages)
+ 
+# GENERATE LIST OF DIAGNOSES IN DATA SET THAT NEED NARRATIVES
+# BEFORE RUNNING DIAGNOSIS REPORTS - THIS WILL OUTPUT A CSV
+# TO THE FOLDER YOU DESIGNATE IN THE admin_path VARIABLE
+# ABOVE (make sure to run the load_packages above before running
+# this code)
+diag_narr_test <- paste0(wd, "/diagnosis_narrative_test.R")
+source(diag_narr_test)
+ 
+# RUN REPORTS
+report_run <- paste0(wd, "/main_report_generator.R")
+diag_run <- paste0(wd, "/diagnosis_report_generator.R")
 source(report_run)
 source(diag_run)
