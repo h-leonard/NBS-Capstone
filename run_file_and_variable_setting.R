@@ -3,7 +3,7 @@
 # SET WORKING DIRECTORY
 # This should be where you have all of your R code files stored
  
-wd <- "r_files"
+wd <- "report_card_r_files"
  
 #########
  
