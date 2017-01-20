@@ -117,12 +117,15 @@ tot_sub <- nrow(hospital_metrics)
 # Create metrics for state
 state <- hospital_metrics %>%
   summarise(
+    submitters = tot_sub,
     total_samples=sum(total_samples, na.rm=TRUE),
     avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
     min_transit_time = min(min_transit_time, na.rm=TRUE),
     max_transit_time = max(max_transit_time, na.rm=TRUE),
     rec_in_2_days = sum(rec_in_2_days, na.rm=TRUE),
     percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    met_goal = sum(met_goal, na.rm=TRUE),
+    percent_met_goal = (met_goal / tot_sub) * 100,
     col_less_than_24_hours = sum(col_less_than_24_hours, na.rm=TRUE),
     percent_less_than_24_hours = mean(percent_less_than_24_hours, na.rm=TRUE),
     trans = sum(trans, na.rm=TRUE),
@@ -130,9 +133,6 @@ state <- hospital_metrics %>%
     unsat_count = sum(unsat_count, na.rm=TRUE),
     unsat_percent = mean(unsat_percent, na.rm=TRUE)
   )
- 
-# Add number of hospitals to state df
-state$submitters <- tot_sub
  
 ##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
 if (line_chart == "quarterly") {
@@ -249,28 +249,57 @@ if (line_chart == "monthly") {
   state_plot$SUBMITTERNAME <- 'State'
 }
  
-##### PREPARE SUMMARY REPORT #####
+##### PREPARE SUMMARY REPORT - HOSPITAL #####
  
-# Reorganize and rename columns
-summary_report <- hospital_metrics[,c(1:3,15,4:7,16,8:10,17,11:12,18,13:14,19:32)]
-summary_cols <- c("Submitter Name", "Sample Count", "Avg. Transit Time", "Rank: Transit Time",
+IDs <- c()
+ 
+# Get all submitter IDs for each hospital
+for (i in 1:nrow(hospital_metrics)) {
+  IDs[i] <- paste(submitters[submitters$HOSPITALREPORT 
+                          %in% hospital_metrics$SUBMITTERNAME[i],]$SUBMITTERID, collapse="; ")
+}
+ 
+# Reorganize columns
+hosp_summary <- hospital_metrics[,c(1:3,15,4:7,16,8:10,17,11:12,18,13:14,19:32)]
+ 
+# Add submitter IDs
+hosp_summary <- cbind(as.data.frame(IDs), hosp_summary)
+ 
+# Rename columns
+hosp_summary_cols <- c("Submitter IDs", "Submitter Name", "Sample Count", "Avg. Transit Time", "Rank: Transit Time",
                   "Min. Transit Time", "Max. Transit Time", "Received within 2 Days", 
                   "% Recevied within 2 Days","Rank: Received within 2 Days",
                   "Met 95% of Samples Received within 2 Days Goal?", "< 24 Hours", 
                   "% < 24 Hours", "Rank: < 24 Hours", "Transfused", "% Transfused", 
                   "Rank: Transfused", "Unsat Count", "Unsat %", "Rank: Unsats", 
                   paste("Unsat:", unlist(as.list(as.character(unsats$description), sorted = FALSE))))
-names(summary_report) <- summary_cols
+names(hosp_summary) <- hosp_summary_cols
  
 # Replace NAs with 0s
-summary_report[is.na(summary_report)] <- 0
+hosp_summary[is.na(hosp_summary)] <- 0
  
 # Change 0s to 'NO' and 1s to 'YES' for met goal
-summary_report$`Met 95% of Samples Received within 2 Days Goal?` <- 
-  ifelse(summary_report$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
+hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` <- 
+  ifelse(hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
  
 # Write to csv for now - may ultimately want to write to Excel
-write.csv(summary_report, paste0(admin_path, "/summary.csv"))
+write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
+ 
+##### PREPARE SUMMARY REPORT - STATE #####
+ 
+state_summary <- state
+ 
+state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. Transit Time",
+                "Max. Transit Time","Received within 2 Days","% Received within 2 Days",
+                "Number of Submitters Meeting 95% of Samples Received within 2 Days Goal",
+                "% Submitters Meeting 95% of Samples within 2 Days Goal",
+                "< 24 Hours","% < 24 Hours","Transfused", "% Transfused", 
+                "Unsat Count", "Unsat %")
+ 
+names(state_summary) <- state_cols
+ 
+ 
+ 
  
 #######################################################
  
