@@ -52,11 +52,14 @@ hospital_metrics <- dd %>%
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
     percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
-    trans = sum(TRANSFUSED == 'Y'),
+    trans = sum(TRANSFUSED == 'Y', na.rm=TRUE),
     trans_percent = trans/total_samples * 100,
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = unsat_count/total_samples * 100
   )
+
+# Store hospital metrics as separate data frame for later use in state summaries
+temp_hosp_metrics <- hospital_metrics
 
 ##### ADD RANKINGS #####
 
@@ -366,7 +369,62 @@ state_all_samp <- initial_dd_filt %>%
     unsat_percent = unsat_count/total_samples * 100
   )  
 
-state_summary <- rbind(state_summary, state_h_samp, state_all_samp)
+# Get metrics for all submitters by submitter ID (both hospital and non-hospital)
+all_sub_metrics <- initial_dd_filt %>%
+  filter(!(SUBMITTERID %in% submitters$SUBMITTERID)) %>%
+  group_by(SUBMITTERID) %>%
+  select(SUBMITTERID, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
+         UNSATCODE, TRANSFUSED) %>%
+  summarise(
+    total_samples=n(),
+    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
+    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
+    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
+                                 na.rm=TRUE),
+    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    trans = sum(TRANSFUSED == 'Y'),
+    trans_percent = trans/total_samples * 100,
+    unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples * 100
+  )
+
+sum(all_sub_metrics$total_samples) + sum(temp_hosp_metrics$total_samples) - state_all_samp$total_samples
+# Seem to be 298 samples too many in this set - should be no more than total number of samples
+# in initial_dd_filt (28240)
+
+# Bind non-hospital submitter summaries with hospital summaries
+all_sub_metrics$SUBMITTERNAME <- NA
+all_sub_metrics <- all_sub_metrics[,c(15,1:14)]
+all_sub_metrics$SUBMITTERID <- NULL
+all_sub_metrics <- rbind(all_sub_metrics, temp_hosp_metrics)
+
+# Get state averages across all submitters (hospital and non-hospital)
+state_all_sub <- all_sub_metrics %>%
+  summarise(
+    submitters = all_sub,
+    total_samples=sum(total_samples, na.rm=TRUE),
+    avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+    min_transit_time = min(min_transit_time, na.rm=TRUE),
+    max_transit_time = max(max_transit_time, na.rm=TRUE),
+    rec_in_2_days = sum(rec_in_2_days, na.rm=TRUE),
+    percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    met_goal = sum(met_goal, na.rm=TRUE),
+    percent_met_goal = (met_goal / all_sub) * 100,
+    col_less_than_24_hours = sum(col_less_than_24_hours, na.rm=TRUE),
+    percent_less_than_24_hours = mean(percent_less_than_24_hours, na.rm=TRUE),
+    trans = sum(trans, na.rm=TRUE),
+    trans_percent = mean(trans_percent, na.rm=TRUE),
+    unsat_count = sum(unsat_count, na.rm=TRUE),
+    unsat_percent = mean(unsat_percent, na.rm=TRUE)
+  )
+
+state_summary <- rbind(state_summary, state_h_samp, state_all_samp, state_all_sub)
 
 state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. Transit Time",
                 "Max. Transit Time","Received within 2 Days","% Received within 2 Days",
@@ -376,6 +434,17 @@ state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. 
                 "Unsat Count", "Unsat %")
 
 names(state_summary) <- state_cols
+
+# Reorganize table, transform, and rename columns
+state_summary <- state_summary[c(1:2,4,3),]
+state_summary <- as.data.frame(t(state_summary))
+names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
+                          "HOSPITALS ONLY: Averaged over samples",
+                          "ALL SUBMITTERS: Averaged over submitters",
+                          "ALL SUBMITTERS: Averaged over samples")
+
+# Publish state summary to admin folder
+write.csv(state_summary, paste0(admin_path, "/state_summary.csv"))
 
 #######################################################
 
