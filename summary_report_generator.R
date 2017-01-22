@@ -18,7 +18,7 @@ hosp_summary <- cbind(as.data.frame(IDs), hosp_summary)
 diag_count <- diagnoses %>%
   group_by(SUBMITTERNAME) %>%
   summarise(
-    total=n()
+    total=sum(total)
   )
 
 # Add diagnosis count to hosp_summary
@@ -44,7 +44,6 @@ hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` <-
 
 # Write to csv for now - may ultimately want to write to Excel
 write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
-
 
 ##### PREPARE SUMMARY REPORT - STATE #####
 
@@ -185,6 +184,14 @@ names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
                           "HOSPITALS ONLY: Averaged over samples",
                           "ALL SUBMITTERS: Averaged over submitters",
                           "ALL SUBMITTERS: Averaged over samples")
+
+# Add diagnosis summary
+diag_hosp <- sum(hosp_summary$`Diagnosis Count`)
+diag_all <- nrow(dd_diag)
+state_diag <- c(diag_hosp, diag_hosp, diag_all, diag_all)
+avg_diag <- c(diag_hosp/tot_sub, diag_hosp/tot_sub, diag_all/all_sub, diag_all/all_sub)
+state_summary <- rbind(state_summary, state_diag, avg_diag)
+rownames(state_summary)[16:17] <- c("Number of Diagnoses","Avg. Number of Diagnoses")
 
 # Publish state summary to admin folder
 write.csv(state_summary, paste0(admin_path, "/state_summary.csv"))
