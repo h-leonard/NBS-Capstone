@@ -290,10 +290,10 @@ write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
 
 ##### PREPARE SUMMARY REPORT - STATE #####
 
-# Get state metrics averaged across hospitals
+## COLUMN 1 PREP: HOSPITALS ONLY: Averaged over *hospitals*
 state_summary <- state
 
-# Get state metrics averaged across all hospital samples
+## COLUMN 2 PREP: HOSPITALS ONLY: Averaged over *samples*
 state_h_samp <- dd %>%
   select(TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
@@ -319,7 +319,7 @@ state_h_samp <- dd %>%
     unsat_percent = unsat_count/total_samples * 100
   )
 
-# Get state metrics averaged across ALL samples (both hospital and non-hospital)
+## COLUMN 3 PREP: ALL SUBMITTERS: Averaged over *submitters*
 
 # filter initial_dd for time period of interest and remove samples with no SUBMITTERID
 initial_dd_filt <- initial_dd %>%
@@ -334,42 +334,7 @@ all_sub <- length(unique(initial_dd_filt$SUBMITTERID)) -
   length(intersect(initial_dd_filt$SUBMITTERID, submitters$SUBMITTERID)) + 
   length(intersect(submitters$HOSPITALREPORT, dd$SUBMITTERNAME))
 
-# Identify ALL submitters that met the 95% goal for samples received within 2 days
-met_goal_test <- initial_dd_filt %>%
-  group_by(SUBMITTERID) %>%
-  summarise(
-    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
-    met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0)
-  )
-
-# Get state averages for samples submitted by ALL submitters
-state_all_samp <- initial_dd_filt %>%
-  select(SUBMITTERID, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
-         UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
-  summarise(
-    submitters = all_sub,
-    total_samples=n(),
-    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
-    min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
-    max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
-    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
-    met_goal = sum(met_goal_test$met_goal, na.rm=TRUE),
-    percent_met_goal = (met_goal / all_sub) * 100,
-    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
-                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
-                                 na.rm=TRUE),
-    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
-    trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples * 100,
-    unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
-  )  
-
-# Get metrics for all submitters by submitter ID (both hospital and non-hospital)
+# determine metrics by non-hospital submitter
 all_sub_metrics <- initial_dd_filt %>%
   filter(!(SUBMITTERID %in% submitters$SUBMITTERID)) %>%
   group_by(SUBMITTERID) %>%
@@ -393,10 +358,6 @@ all_sub_metrics <- initial_dd_filt %>%
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = unsat_count/total_samples * 100
   )
-
-sum(all_sub_metrics$total_samples) + sum(temp_hosp_metrics$total_samples) - state_all_samp$total_samples
-# Seem to be 298 samples too many in this set - should be no more than total number of samples
-# in initial_dd_filt (28240)
 
 # Bind non-hospital submitter summaries with hospital summaries
 all_sub_metrics$SUBMITTERNAME <- NA
@@ -424,7 +385,32 @@ state_all_sub <- all_sub_metrics %>%
     unsat_percent = mean(unsat_percent, na.rm=TRUE)
   )
 
-state_summary <- rbind(state_summary, state_h_samp, state_all_samp, state_all_sub)
+## COLUMN 4 PREP: ALL SUBMITTERS: Averaged over *samples*
+state_all_samp <- initial_dd_filt %>%
+  select(SUBMITTERID, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
+         UNSATCODE, RECALL_FLAG, TRANSFUSED) %>%
+  summarise(
+    submitters = all_sub,
+    total_samples=n(),
+    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
+    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    met_goal = state_all_sub$met_goal,
+    percent_met_goal = (met_goal / all_sub) * 100,
+    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
+                                   COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
+                                 na.rm=TRUE),
+    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    trans = sum(TRANSFUSED == 'Y'),
+    trans_percent = trans/total_samples * 100,
+    unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples * 100
+  )  
+
+state_summary <- rbind(state_summary, state_h_samp, state_all_sub, state_all_samp)
 
 state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. Transit Time",
                 "Max. Transit Time","Received within 2 Days","% Received within 2 Days",
@@ -435,8 +421,7 @@ state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. 
 
 names(state_summary) <- state_cols
 
-# Reorganize table, transform, and rename columns
-state_summary <- state_summary[c(1:2,4,3),]
+# Transform table and rename columns
 state_summary <- as.data.frame(t(state_summary))
 names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
                           "HOSPITALS ONLY: Averaged over samples",
