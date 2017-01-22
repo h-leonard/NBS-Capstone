@@ -45,6 +45,44 @@ hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` <-
 # Write to csv for now - may ultimately want to write to Excel
 write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
 
+##### PREPARE SUMMARY REPORT - DIAGNOSES #####
+
+# PREP FOR COLUMN 1: COUNT OF DIAGNOSES FROM HOSPITALS 
+hosp_diag <- diagnoses %>%
+  group_by(DIAGNOSIS) %>%
+  summarise(
+    total_hosp=sum(total)
+  )
+
+# join full list of diagnoses to count of hospital diagnoses
+diag <- as.data.frame(diag_desc$DIAGNOSIS)
+names(diag) <- "DIAGNOSIS"
+diag <- left_join(diag, hosp_diag, by="DIAGNOSIS")
+
+# PREP FOR COLUMN 3: COUNT OF DIAGNOSES FROM ALL SUBMITTERS
+all_diag <- dd_diag %>%
+  group_by(DIAGNOSIS) %>%
+  summarise(
+    total_all=n()
+  )
+
+# join counts of diagnoses for all submitters to diag
+diag <- left_join(diag, all_diag, by="DIAGNOSIS")
+
+# PREP FOR COLUMN 2: GET COUNTS FOR ONLY NON-HOSPITAL SUBMITTERS
+diag$total_nonhosp <- diag$total_all - diag$total_hosp
+
+# rearrange and rename columns
+diag <- diag[,c(1:2,4,3)]
+names(diag) <- c("Diagnosis","Count from Hospital Submitters","Count from Other Submitters",
+                 "Total Count")
+
+# replace NAs with 0s
+diag[is.na(diag)] <- 0
+
+# Publish diagnosis summary to admin folder
+write.csv(diag, paste0(admin_path, "/diagnosis_summary.csv"))
+
 ##### PREPARE SUMMARY REPORT - STATE #####
 
 ## COLUMN 1 PREP: HOSPITALS ONLY: Averaged over *hospitals*
