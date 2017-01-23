@@ -39,9 +39,13 @@ separator <- "|"
 # CODES FILE PATH
 # This should be your directory (e.g., the location on your
 # computer) where you have all supporting csv files. Required
-# at this location are two files:
-# -- VA NBS Report Card Hospital Names.csv - has hospital codes & names
-# -- unsat_codes.csv - has descriptions for each unsatisfactory code
+# at this location are five files:
+#   -- diagnosis_descriptions.csv - narratives for each diagnosis for use in diagnosis reporting
+#   -- hospital_emails.csv - email addresses for each hospital for sending reports
+#   -- hospital_messages.csv - individual messages to hospitals to be included in their reports
+#   -- unsat_codes.csv - descriptions for each unsatisfactory code
+#   -- VA NBS Report Card Hospital Names.csv - hospital codes and names as we want them to appear
+#             in their reports
 
 codes_path <- "/mnt/cpp4f/NBS_Report_Card/submitter_and_unsat_codes"
 
@@ -106,5 +110,7 @@ source(diag_narr_test)
 # RUN REPORTS
 report_run <- paste0(wd, "/main_report_generator.R")
 diag_run <- paste0(wd, "/diagnosis_report_generator.R")
+summary_run <- paste0(wd, "/summary_report_generator.R")
 source(report_run)
 source(diag_run)
+source(summary_run)
