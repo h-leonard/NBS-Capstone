@@ -1,3 +1,6 @@
+# Stop running code if duplicate submitter IDs have been discovered in 'main_report_generator'
+if(nrow(test) != 0) {stopQuietly()}
+
 ##### PREPARE SUMMARY REPORT - HOSPITAL #####
 
 IDs <- c()
