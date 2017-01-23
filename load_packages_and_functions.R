@@ -100,6 +100,17 @@ read_data <- function(folder, ...) {
   
 }
 
+stopQuietly <- function(...) {
+  
+  # Stops a source file quietly (without printing an error message), used in cases
+  # where we have multiple files that need to stop running, but only have one of them
+  # throw an error.
+  
+  blankMsg <- sprintf("\r%s\r", paste(rep(" ", getOption("width")-1L), collapse=" "));
+  stop(simpleError(blankMsg));
+  
+} 
+
 # Reformat start date and end date as dates
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
