@@ -58,7 +58,7 @@ hosp_diag <- diagnoses %>%
   )
 
 # join full list of diagnoses to count of hospital diagnoses
-diag <- as.data.frame(diag_desc$DIAGNOSIS)
+diag <- as.data.frame(diag_desc$DIAGNOSIS, stringsAsFactors = FALSE)
 names(diag) <- "DIAGNOSIS"
 diag <- left_join(diag, hosp_diag, by="DIAGNOSIS")
 
