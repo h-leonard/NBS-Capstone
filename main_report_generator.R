@@ -12,6 +12,15 @@ submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
 
+# test for IDs assigned to multiple hospitals in submitters
+test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, fromLast=TRUE)),]
+test_hs <- paste0("HOSPITALS:       ", paste(test$HOSPITALREPORT, collapse=", "))
+test_ids <- paste0("DUPLICATED IDs:  ", paste(unique(test$SUBMITTERID), collapse=", "))
+
+# stop report if duplicate IDs are discovered
+if(nrow(test) != 0) {stop(sprintf("At least one ID in 'VA NBS Report Card Hospital Names' is assigned to multiple hospitals:\n  %s\n  %s \nPlease correct in 'VA NBS Report Card Hospital Names' before running reports.", 
+                                   test_hs, test_ids)) }
+
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
 initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
 
