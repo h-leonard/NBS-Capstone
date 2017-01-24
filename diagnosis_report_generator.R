@@ -15,13 +15,24 @@ dd_diag <- initial_dd_diag %>%
 # join diagnoses to dd dataframe based on sampleID
 dd_diag_hosp <- inner_join(dd_diag, dd, by="SAMPLEID")
  
-# select columns from dd_diag_hosp for report, get count of each diagnosis
-diagnoses <- dd_diag_hosp %>%
-  select(DIAGNOSIS, SUBMITTERNAME) %>%
+# Select columns from dd_diag_hosp for report, get count of each diagnosis
+# NOTE: if a diagnosis is associated with more than one hospital (e.g., 
+# because the infant was born at a particular hospital, transferred
+# to another hospital, and both submitted samples that ended up being
+# associate with a diagnosis), ALL hospitals submitting samples associated
+# with a diagnosis will be 'credited' with this on their reports. For this
+# reason, we will NOT want to get a sum of the diagnoses in this dataframe
+# to count the total number of diagnoses, as some will be counted multiple 
+# times
+diagnoses_temp <- dd_diag_hosp %>%
+  select(DIAGNOSIS, SUBMITTERNAME, PATIENTID) %>%
+  group_by(SUBMITTERNAME, DIAGNOSIS, PATIENTID) %>%
+  summarise()
+ 
+# Get count of separate diagnoses associated with samples for each hospital
+diagnoses <- diagnoses_temp %>%
   group_by(SUBMITTERNAME, DIAGNOSIS) %>%
-  summarise(
-    total = n()
-  )
+  summarise(Count=n())
  
 #######################################################
  
