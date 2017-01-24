@@ -1,7 +1,7 @@
 # Load packages and functions for Newborn Screening Hospital Reporting
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
-
+ 
 libs <- c('xtable',
           'data.table',
           'stringr',
@@ -17,16 +17,17 @@ libs <- c('xtable',
           'pander',
           'shiny',
           'toOrdinal',
-          'mailR',
-          'readxl')
-
+          # 'mailR', - add this back in if we figure out solution for PC
+          'readxl',
+          'rmarkdown')
+ 
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
     install.packages(l)
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
-
+ 
 get_file_list <- function(folder) {
   
   # Returns list of files in a folder
@@ -38,7 +39,7 @@ get_file_list <- function(folder) {
   return(temp)
   
 }
-
+ 
 get_file_extension <- function(folder) {
   
   # Returns the file extension of files in a folder. Assumes that all files have
@@ -54,7 +55,7 @@ get_file_extension <- function(folder) {
   return(data_type)
   
 }
-
+ 
 read_data <- function(folder, ...) {
   
   # Returns dataframe of data. Optional arguments are columns to be reformatted as dates
@@ -99,7 +100,7 @@ read_data <- function(folder, ...) {
   return(initial_dd)
   
 }
-
+ 
 stopQuietly <- function(...) {
   
   # Stops a source file quietly (without printing an error message), used in cases
@@ -110,7 +111,7 @@ stopQuietly <- function(...) {
   stop(simpleError(blankMsg));
   
 } 
-
+ 
 # Reformat start date and end date as dates
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
