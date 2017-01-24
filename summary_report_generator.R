@@ -21,7 +21,7 @@ hosp_summary <- cbind(as.data.frame(IDs), hosp_summary)
 diag_count <- diagnoses %>%
   group_by(SUBMITTERNAME) %>%
   summarise(
-    total=sum(total)
+    total=sum(Count)
   )
  
 # Add diagnosis count to hosp_summary
@@ -130,7 +130,8 @@ state_h_samp <- cbind(state_h_samp, state_h_unsats)
  
 ## COLUMN 3 PREP: ALL SUBMITTERS: Averaged over *submitters*
  
-# filter initial_dd for time period of interest and remove samples with no SUBMITTERID
+# filter initial_dd for time period of interest and remove
+# any records missing SUBMITTERID
 initial_dd_filt <- initial_dd %>%
   filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date, SUBMITTERID != "" | !is.na(SUBMITTERID))
  
