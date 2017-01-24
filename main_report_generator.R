@@ -15,6 +15,7 @@ submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
 # test for IDs assigned to multiple hospitals in submitters
 ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, fromLast=TRUE)),]
 
+# stop report if duplicate IDs are discovered
 if (nrow(ID_test) != 0){
   e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
   e_verb <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "is", "are")
@@ -28,9 +29,6 @@ if (nrow(ID_test) != 0){
   {stop(sprintf("%s in 'VA NBS Report Card Hospital Names' %s assigned to more than one hospital:\n%s\nPlease correct in 'VA NBS Report Card Hospital Names' before running reports.", 
                 e_begin, e_verb, e_messages)) }
   }
-
-# stop report if duplicate IDs are discovered
-if(nrow(ID_test) != 0) 
 
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
 initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
