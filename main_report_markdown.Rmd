@@ -10,6 +10,14 @@ date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0"
 \pagenumbering{gobble}
  
 ```{r, echo=FALSE, message=FALSE}
+message <- messages[messages$Hospital == submitter, 2]
+```
+ 
+\begin{center}
+`r if(!identical(message,character(0))) {message}`
+\end{center}
+ 
+```{r, echo=FALSE, message=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 hospital_filt <- ungroup(hospital_metrics_plot)
 h_plot <- hospital_filt[hospital_filt$SUBMITTERNAME==submitter,]
@@ -18,20 +26,20 @@ max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
 min_transit_h <- min(min_transit_percent, h_plot$percent_rec_in_2_days)
 bound <- rbind(h_plot, state_plot)
 title1 = "Percentage of Samples Received\n    within Two Days of Collection"
-title2 = "        Percentage of Samples That Were\nUnsatisfactory (Requiring Repeat Collection)"
+title2 = " Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
 ```
  
 |      | Hospital || Hospital Rank | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
 | **Number of samples submitted** | `r format(h$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
-| **Average transit time** | `r round(h$avg_transit_time, digits=2)` days |  | `r toOrdinal(h$rank_transit)` of `r state$submitters` | `r round(state$avg_transit_time, digits=2)` days |
+| **Average transit time** | `r h$avg_transit_time` days |  | `r toOrdinal(h$rank_transit)` of `r state$submitters` | `r state$avg_transit_time` days |
 | &nbsp;&nbsp;&nbsp;&nbsp;Minimum transit time | `r h$min_transit_time` days |  |  |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;Maximum transit time | `r h$max_transit_time` days |  |  |  |
 | **Samples received within 2 days of** |  |  |  |  | 
-| **&nbsp;&nbsp;&nbsp;&nbsp;collection (GOAL: 95%)** | `r format(h$rec_in_2_days, big.mark=",", trim=TRUE)` | `r round(h$percent_rec_in_2_days, digits=2)`% | `r toOrdinal(h$rank_percent_within_goal)` of `r state$submitters` | `r round(state$percent_rec_in_2_days, digits=2)`% |
-| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r round(h$percent_less_than_24_hours, digits=2)`% | `r toOrdinal(h$rank_early_collection)` of `r state$submitters` | `r round(state$percent_less_than_24_hours, digits=2)`%
-| **Samples transfused prior to collection** |  `r h$trans` | `r round(h$trans_percent, digits=2)`% |  `r toOrdinal(h$rank_transfused)` of `r state$submitters`  |  `r round(state$trans_percent, digits=2)`% |
-| **Unsatisfactory samples** | `r h$unsat_count` |  `r round(h$unsat_percent, digits=2)`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r round(state$unsat_percent, digits=2)`% |
+| **&nbsp;&nbsp;&nbsp;&nbsp;collection (GOAL: 95%)** | `r format(h$rec_in_2_days, big.mark=",", trim=TRUE)` | `r h$percent_rec_in_2_days`% | `r toOrdinal(h$rank_percent_within_goal)` of `r state$submitters` | `r state$percent_rec_in_2_days`% |
+| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours`% | `r toOrdinal(h$rank_early_collection)` of `r state$submitters` | `r state$percent_less_than_24_hours`%
+| **Samples transfused prior to collection** |  `r h$trans` | `r h$trans_percent`% |  `r toOrdinal(h$rank_transfused)` of `r state$submitters`  |  `r state$trans_percent`% |
+| **Unsatisfactory samples** | `r h$unsat_count` |  `r h$unsat_percent`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r state$unsat_percent`% |
  
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 # create table of unsat counts for hospital
@@ -49,7 +57,6 @@ if (nrow(unsats_final) > 0) {
 }
 ```
  
-&nbsp;&nbsp;  
 &nbsp;&nbsp;  
  
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
