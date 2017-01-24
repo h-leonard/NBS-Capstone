@@ -1,5 +1,5 @@
 # Stop running code if duplicate submitter IDs have been discovered in 'main_report_generator'
-if(nrow(test) != 0) {stopQuietly()}
+if(nrow(ID_test) != 0) {stopQuietly()}
 
 # read in descriptions of diagnoses for use in report
 diag_desc <- read.csv(paste(codes_path, "/", "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
