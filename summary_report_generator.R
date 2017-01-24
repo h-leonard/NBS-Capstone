@@ -107,22 +107,22 @@ state_h_samp <- dd %>%
   summarise(
     submitters = tot_sub,
     total_samples=n(),
-    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    avg_transit_time = round(mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), 2),
     min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = state_summary$met_goal,
-    percent_met_goal = (met_goal / tot_sub) * 100,
+    percent_met_goal = round((met_goal / tot_sub) * 100, 2),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
-    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    percent_less_than_24_hours = round(col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100, 2),
     trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples * 100,
+    trans_percent = round(trans/total_samples * 100, 2),
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
+    unsat_percent = round(unsat_count/total_samples * 100, 2)
   )
  
 # add unsat counts to state summary
@@ -151,21 +151,21 @@ all_sub_metrics <- initial_dd_filt %>%
          UNSATCODE, TRANSFUSED) %>%
   summarise(
     total_samples=n(),
-    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    avg_transit_time = round(mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), 2),
     min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
-    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    percent_less_than_24_hours = round(col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100, 2),
     trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples * 100,
+    trans_percent = round(trans/total_samples * 100, 2),
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
+    unsat_percent = round(unsat_count/total_samples * 100, 2)
   )
  
 # Bind non-hospital submitter summaries with hospital summaries
@@ -189,19 +189,19 @@ state_all_sub <- all_sub_metrics %>%
   summarise(
     submitters = all_sub,
     total_samples=sum(total_samples, na.rm=TRUE),
-    avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+    avg_transit_time = round(mean(avg_transit_time, na.rm=TRUE), 2),
     min_transit_time = min(min_transit_time, na.rm=TRUE),
     max_transit_time = max(max_transit_time, na.rm=TRUE),
     rec_in_2_days = sum(rec_in_2_days, na.rm=TRUE),
-    percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    percent_rec_in_2_days = round(mean(percent_rec_in_2_days, na.rm=TRUE), 2),
     met_goal = sum(met_goal, na.rm=TRUE),
-    percent_met_goal = (met_goal / all_sub) * 100,
+    percent_met_goal = round((met_goal / all_sub) * 100, 2),
     col_less_than_24_hours = sum(col_less_than_24_hours, na.rm=TRUE),
-    percent_less_than_24_hours = mean(percent_less_than_24_hours, na.rm=TRUE),
+    percent_less_than_24_hours = round(mean(percent_less_than_24_hours, na.rm=TRUE), 2),
     trans = sum(trans, na.rm=TRUE),
-    trans_percent = mean(trans_percent, na.rm=TRUE),
+    trans_percent = round(mean(trans_percent, na.rm=TRUE), 2),
     unsat_count = sum(unsat_count, na.rm=TRUE),
-    unsat_percent = mean(unsat_percent, na.rm=TRUE)
+    unsat_percent = round(mean(unsat_percent, na.rm=TRUE), 2)
   )
  
 state_all_sub <- cbind(state_all_sub, unsat_all_ready)
@@ -213,22 +213,22 @@ state_all_samp <- initial_dd_filt %>%
   summarise(
     submitters = all_sub,
     total_samples=n(),
-    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    avg_transit_time = round(mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), 2),
     min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = state_all_sub$met_goal,
-    percent_met_goal = (met_goal / all_sub) * 100,
+    percent_met_goal = round((met_goal / all_sub) * 100, 2),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
-    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    percent_less_than_24_hours = round(col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100, 2),
     trans = sum(TRANSFUSED == 'Y'),
-    trans_percent = trans/total_samples * 100,
+    trans_percent = round(trans/total_samples * 100, 2),
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
+    unsat_percent = round(unsat_count/total_samples * 100, 2)
   )  
  
 state_all_samp <- cbind(state_all_samp, unsat_all_ready)
@@ -255,9 +255,17 @@ names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
 diag_hosp <- sum(hosp_summary$`Diagnosis Count`)
 diag_all <- nrow(dd_diag)
 state_diag <- c(diag_hosp, diag_hosp, diag_all, diag_all)
-avg_diag <- c(diag_hosp/tot_sub, diag_hosp/tot_sub, diag_all/all_sub, diag_all/all_sub)
+avg_diag <- round(c(diag_hosp/tot_sub, diag_hosp/tot_sub, diag_all/all_sub, diag_all/all_sub), 2)
 state_summary <- rbind(state_summary, state_diag, avg_diag)
 rownames(state_summary)[(nrow(state_summary)-1):(nrow(state_summary))] <- c("Number of Diagnoses","Avg. Number of Diagnoses")
  
 # Publish state summary to admin folder
 write.csv(state_summary, paste0(admin_path, "/state_summary.csv"))
+ 
+##### PREPARE OUTLIER TRANSIT TIME REPORT #####
+ 
+time_outliers <- initial_dd %>%
+  filter(TRANSIT_TIME > 10, BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+  arrange(desc(TRANSIT_TIME))
+ 
+write.csv(time_outliers, paste0(admin_path, "/transit_time_outliers.csv"))
