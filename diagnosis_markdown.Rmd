@@ -20,11 +20,3 @@ names(diag_sub) <- c("Diagnosis", "Count", "Description")
 # show counts and description for each diagnosis
 pander(diag_sub, row.names = FALSE, justify = "left", split.cells = c(20, 1, 50), split.table = Inf)
 ```
- 
-```{r, echo=FALSE, message=FALSE}
-message <- messages[messages$Hospital == submitter, 2]
-```
- 
-\begin{center}
-`r if(!identical(message,character(0))) {message}`
-\end{center}
