@@ -44,6 +44,19 @@ if (!is.null(initial_dd$CATEGORY)) {initial_dd <- filter(initial_dd, !(CATEGORY 
 # add hospitalreport name to dd
 dd <- left_join(initial_dd, submitters, by="SUBMITTERID")
  
+# output report of all submitters not in VA NBS Report Card Hospital Names, 
+# with a count of samples, for determining if any submitters need to be
+# added to this file
+not_in_VA_NBS_hosp <- dd %>%
+  filter(is.na(HOSPITALREPORT), BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+  group_by(SUBMITTERID, SUBMITTERNAME) %>%
+  select(SUBMITTERID, SUBMITTERNAME) %>%
+  summarise(TOTAL=n()) %>%
+  arrange(desc(TOTAL))
+ 
+# write file to admin reports
+write.csv(not_in_VA_NBS_hosp, paste0(admin_path, "/submitters_not_in_VA_NBS_hospital_file.csv"))
+ 
 # replace submitter name with hospitalreport field
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
  
