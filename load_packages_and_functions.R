@@ -97,6 +97,12 @@ read_data <- function(folder, ...) {
     initial_dd$SUBMITTERID <- as.character(initial_dd$SUBMITTERID)
   }
   
+  # If dataframe has LINKID column, change this to PATIENTID - this will only be
+  # an issue for the version of the data being used by UVA
+  if("LINKID" %in% names(initial_dd)) {
+    colnames(initial_dd)[which(names(initial_dd) == "LINKID")] <- "PATIENTID"
+  }
+  
   return(initial_dd)
   
 }
