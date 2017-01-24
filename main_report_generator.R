@@ -15,7 +15,7 @@ submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
 # test for IDs assigned to multiple hospitals in submitters
 ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, fromLast=TRUE)),]
 
-if (!is.null(ID_test)){
+if (nrow(ID_test) != 0){
   e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
   e_verb <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "is", "are")
   e_messages <- ""
