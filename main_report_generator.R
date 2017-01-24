@@ -2,19 +2,23 @@
 # FILE LOCATION AND NAMES ARE SET IN "run_file_and_variable_setting.R."
 # IF YOU RUN THAT FILE, IT WILL ALLOW YOU TO SET YOUR FILE LOCATIONS
 # AND ALSO RUN THIS FILE.
-
+ 
 # read in unsats csv file
 unsats <- read.csv(paste(codes_path, "/", "unsat_codes.csv", sep=""))
-
+ 
 # read in submitter names as we wish them to appear in the report
 temp <- paste(codes_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
 submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
-
+ 
+# read in individual messages to hospitals to be included in report
+messages <- read.csv(paste(codes_path, "/", "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
+messages <- messages[messages$Message != "",]
+ 
 # test for IDs assigned to multiple hospitals in submitters
 ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, fromLast=TRUE)),]
-
+ 
 # stop report if duplicate IDs are discovered
 if (nrow(ID_test) != 0){
   e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
@@ -28,29 +32,29 @@ if (nrow(ID_test) != 0){
     }
   {stop(sprintf("%s in 'VA NBS Report Card Hospital Names' %s assigned to more than one hospital:\n%s\nPlease correct in 'VA NBS Report Card Hospital Names' before running reports.", 
                 e_begin, e_verb, e_messages)) }
-  }
-
+}
+ 
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
 initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
-
+ 
 # remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
 remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-initial_dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))
-
+if (!is.null(initial_dd$CATEGORY)) {initial_dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))}
+ 
 # add hospitalreport name to dd
 dd <- left_join(initial_dd, submitters, by="SUBMITTERID")
-
+ 
 # replace submitter name with hospitalreport field
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
-
+ 
 # remove records that have NA for submittername
 dd <- dd[!is.na(dd$HOSPITALREPORT),]
-
+ 
 # set cutoff value for transit time (4 hours, or 1/6 of day)
 cutoff <- 1/6
-
+ 
 ##############################
-
+ 
 # create data frame of required metrics for each submitter
 hospital_metrics <- dd %>%
   group_by(SUBMITTERNAME) %>%
@@ -59,102 +63,102 @@ hospital_metrics <- dd %>%
          UNSATCODE, TRANSFUSED) %>%
   summarise(
     total_samples=n(),
-    avg_transit_time = mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
+    avg_transit_time = round(mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), 2),
     min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
-    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
+      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
                                  na.rm=TRUE),
-    percent_less_than_24_hours = col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100,
+    percent_less_than_24_hours = round(col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100, 2),
     trans = sum(TRANSFUSED == 'Y', na.rm=TRUE),
-    trans_percent = trans/total_samples * 100,
+    trans_percent = round(trans/total_samples * 100, 2),
     unsat_count = sum(!is.na(UNSATCODE)),
-    unsat_percent = unsat_count/total_samples * 100
+    unsat_percent = round(unsat_count/total_samples * 100, 2)
   )
-
+ 
 # Store hospital metrics as separate data frame for later use in state summaries
 temp_hosp_metrics <- hospital_metrics
-
+ 
 ##### ADD RANKINGS #####
-
+ 
 # Rank hospitals by mean transit time (ascending order; e.g., least mean transit time = #1)
 hospital_metrics$rank_transit <- rank(hospital_metrics$avg_transit_time, na.last="keep", ties.method="min")
-
+ 
 # Rank hospitals by percentage of samples recevied within 2 days (descending order; e.g.,
 #      greatest percentage of samples received by target time = #1)
 hospital_metrics$rank_percent_within_goal <- rank(-hospital_metrics$percent_rec_in_2_days, na.last="keep", ties.method="min")
-
+ 
 # Rank hospitals by number of samples collected at less than 24 hours of age (ascending order;
 #     e.g., least number of early collections = #1)
 hospital_metrics$rank_early_collection <- rank(hospital_metrics$percent_less_than_24_hours, na.last="keep", ties.method="min")
-
+ 
 # Rank hospitals by number of samples transfused prior to collection (ascending order;
 #     e.g., least number of early collections = #1)
 hospital_metrics$rank_transfused <- rank(hospital_metrics$trans_percent, na.last="keep", ties.method="min")
-
+ 
 # Rank hospitals by number of unsatisfactory samples (ascending order; e.g., least number of unsats = #1)
 hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="keep", ties.method="min")
-
+ 
 ##### ADD UNSAT COUNTS #####
-
+ 
 # get count of unsat codes for each submitter
 unsat_prep <- dd[!is.na(dd$UNSATCODE),] %>% 
   group_by(SUBMITTERNAME, UNSATCODE) %>%
   filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   summarise(count = n())  
-
+ 
 # get all possibilities for unsat codes
 unsat_seq <- seq(1:nrow(unsats))
-
+ 
 # create cross join of all possible unsat codes and all submitter names
 cross_join <- CJ(SUBMITTERNAME=unique(dd$SUBMITTERNAME), UNSATCODE=unsat_seq)
-
+ 
 # create left join of unsat counts and cross_join (so we have NAs
 # for each submitter that has no unsats for that particular code)
 unsat_amts <- left_join(cross_join, unsat_prep, by=c("SUBMITTERNAME", "UNSATCODE"))
-
+ 
 # replace UNSATCODE column with 'col' column
 unsat_amts$col <- paste("unsat_", str_pad(unsat_amts$UNSATCODE, 2, pad="0"), sep="")
 unsat_amts$UNSATCODE <- NULL
-
+ 
 # Reshape dataframe to have rows as SUBMITTERNAME and columns as col (e.g., unsat_01, unsat_02, etc.)
 unsats_ready <- dcast(unsat_amts, SUBMITTERNAME ~ col, value.var="count")
-
+ 
 # Replace column names (unsat_01, etc.) with unsat descriptions
 names(unsats_ready) <- c('SUBMITTERNAME', unlist(as.list(as.character(unsats$description), sorted = FALSE)))
-
+ 
 # left join unsats_ready and hospital_metrics
 hospital_metrics <- left_join(hospital_metrics, unsats_ready, by="SUBMITTERNAME")
-
+ 
 ############################
-
+ 
 # Determine number of hospitals
 tot_sub <- nrow(hospital_metrics)
-
+ 
 # Create metrics for state
 state <- hospital_metrics %>%
   summarise(
     submitters = tot_sub,
     total_samples=sum(total_samples, na.rm=TRUE),
-    avg_transit_time = mean(avg_transit_time, na.rm=TRUE),
+    avg_transit_time = round(mean(avg_transit_time, na.rm=TRUE), 2),
     min_transit_time = min(min_transit_time, na.rm=TRUE),
     max_transit_time = max(max_transit_time, na.rm=TRUE),
     rec_in_2_days = sum(rec_in_2_days, na.rm=TRUE),
-    percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    percent_rec_in_2_days = round(mean(percent_rec_in_2_days, na.rm=TRUE), 2),
     met_goal = sum(met_goal, na.rm=TRUE),
-    percent_met_goal = (met_goal / tot_sub) * 100,
+    percent_met_goal = round((met_goal / tot_sub) * 100, 2),
     col_less_than_24_hours = sum(col_less_than_24_hours, na.rm=TRUE),
-    percent_less_than_24_hours = mean(percent_less_than_24_hours, na.rm=TRUE),
+    percent_less_than_24_hours = round(mean(percent_less_than_24_hours, na.rm=TRUE), 2),
     trans = sum(trans, na.rm=TRUE),
-    trans_percent = mean(trans_percent, na.rm=TRUE),
+    trans_percent = round(mean(trans_percent, na.rm=TRUE), 2),
     unsat_count = sum(unsat_count, na.rm=TRUE),
-    unsat_percent = mean(unsat_percent, na.rm=TRUE)
+    unsat_percent = round(mean(unsat_percent, na.rm=TRUE), 2)
   )
-
+ 
 ##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
 if (line_chart == "quarterly") {
   quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
@@ -165,7 +169,7 @@ if (line_chart == "quarterly") {
   
   # add quarter information to dd_plot
   dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
-
+ 
   # group by submitter and quarter
   hospital_metrics_plot <- dd_plot %>%
     group_by(SUBMITTERNAME, QUARTER) %>%
@@ -190,7 +194,7 @@ if (line_chart == "quarterly") {
   hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_quarts, by=c("SUBMITTERNAME", "QUARTER"))
   
   #####
-
+ 
   # determine limits for y-axes by finding max for avg_transit_time
   # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
   # only the greatest value that is less than 4; for unsat percentage,
@@ -269,16 +273,16 @@ if (line_chart == "monthly") {
     )
   state_plot$SUBMITTERNAME <- 'State'
 }
-
+ 
 #######################################################
-
+ 
 # Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
 # than running all reports)
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
-
+ 
 # Generate report for each hospital
 render_file <- paste(wd, "/", "main_report_markdown.Rmd", sep="")
-
+ 
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
                     output_format = "pdf_document",
