@@ -50,11 +50,13 @@ write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
  
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
  
-# PREP FOR COLUMN 1: COUNT OF DIAGNOSES FROM HOSPITALS 
-hosp_diag <- diagnoses %>%
+# PREP FOR COLUMN 2: TOTAL COUNT OF DIAGNOSES THAT HAVE 
+# ANY HOSPITAL ASSOCIATIONS (counting each diagnosis
+# for each patient only once, pulling from any diagnosis )
+hosp_diag <- unique(diagnoses_temp[c("DIAGNOSIS","PATIENTID")]) %>%
   group_by(DIAGNOSIS) %>%
   summarise(
-    total_hosp=sum(total)
+    `HOSPITALCOUNT`=n()
   )
  
 # join full list of diagnoses to count of hospital diagnoses
@@ -62,23 +64,31 @@ diag <- as.data.frame(diag_desc$DIAGNOSIS, stringsAsFactors = FALSE)
 names(diag) <- "DIAGNOSIS"
 diag <- left_join(diag, hosp_diag, by="DIAGNOSIS")
  
-# PREP FOR COLUMN 3: COUNT OF DIAGNOSES FROM ALL SUBMITTERS
-all_diag <- dd_diag %>%
+# ADD ALL DIAGNOSES NOT MATCHED ON HOSPITAL
+ 
+# join diagnoses to initial_dd dataframe based on sampleID
+dd_diag_all <- left_join(dd_diag, initial_dd, by="SAMPLEID")
+ 
+# group diagnosis information by diagnosis and patient ID
+diagnoses_all_temp <- dd_diag_all %>%
+  select(DIAGNOSIS, PATIENTID) %>%
+  group_by(DIAGNOSIS, PATIENTID) %>%
+  summarise()
+ 
+# Get count of separate diagnoses 
+diagnoses_all <- diagnoses_all_temp %>%
   group_by(DIAGNOSIS) %>%
-  summarise(
-    total_all=n()
-  )
+  summarise(ALLCOUNT=n())
  
-# join counts of diagnoses for all submitters to diag
-diag <- left_join(diag, all_diag, by="DIAGNOSIS")
+# join total count of diagnoses to count of hospital diagnoses
+diag <- left_join(diag, diagnoses_all, by="DIAGNOSIS")
  
-# PREP FOR COLUMN 2: GET COUNTS FOR ONLY NON-HOSPITAL SUBMITTERS
-diag$total_nonhosp <- diag$total_all - diag$total_hosp
+# add column for non-hospital submitters
+diag$NONHOSPTIAL <- diag$ALLCOUNT - diag$HOSPITALCOUNT
  
 # rearrange and rename columns
-diag <- diag[,c(1:2,4,3)]
-names(diag) <- c("Diagnosis","Count from Hospital Submitters","Count from Other Submitters",
-                 "Total Count")
+diag <- diag[,c(1,2,4,3)]
+names(diag) <- c("Diagnosis","Hospital Count","Non-Hospital Count","Total Count")
  
 # replace NAs with 0s
 diag[is.na(diag)] <- 0
