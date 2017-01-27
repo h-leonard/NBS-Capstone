@@ -16,6 +16,7 @@ libs <- c('xtable',
           'dplyr',
           'pander',
           'shiny',
+          'lazyeval',
           'toOrdinal',
           # 'mailR', - add this back in if we figure out solution for PC
           'readxl',
@@ -27,6 +28,10 @@ for (l in libs) {
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
+ 
+# Reformat start date and end date as dates
+start_date <- as.Date(start_date, "%m/%d/%Y")
+end_date <- as.Date(end_date, "%m/%d/%Y")
  
 get_file_list <- function(folder) {
   
@@ -103,7 +108,54 @@ read_data <- function(folder, ...) {
     colnames(initial_dd)[which(names(initial_dd) == "LINKID")] <- "PATIENTID"
   }
   
+  # If dataframe has CATEGORY column, remove any records that have category listed as "Proficiency", 
+  # "Treatment", or "Treatment - PKU"
+  remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
+  if (!is.null(initial_dd$CATEGORY)) {initial_dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))}
+  
   return(initial_dd)
+  
+}
+ 
+create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date, e_date=end_date, period=line_chart) {
+  
+  # Given a dataframe, start date, and end date, returns 2 data frames filtered by
+  # start date and end date:
+  #   1) period_df - filtered by period of interest (using start_date and end_date)
+  #   2) year_df - filtered for one year prior to end_date (using end of period, either the month or 
+  #      the quarter (depending on line_chart value)
+  
+  # Define column that will be used to filter data
+  filt_col <- ifelse(type == "sample", "BIRTHDATE", "DIAGNOSISDATE")
+  
+  # Obtain first dataframe, filtering data by start_date and end_date
+  period_df <- df %>%
+    filter_(interp(~ as.Date(filt_col, format="%m/%d/%Y") >= s_date
+                   & as.Date(filt_col, format="%m/%d/%Y") <= e_date,
+                   filt_col=as.name(filt_col)))
+  
+  # Determine end date for period, depending on whether line_plot
+  # is defined as "monthly" or "quarterly"
+  period_end <- as.Date(ifelse(period == "quarterly", as.Date(as.yearqtr(e_date), frac=1), 
+                               as.Date(as.yearmon(e_date), frac=1)))
+  
+  # Filter df to include one year of data (dated backwards from end date)
+  year_df <- df %>%
+    filter_(interp(~ as.Date(filt_col, format="%m/%d/%Y") > (period_end - years(1)) 
+                   & as.Date(filt_col, format="%m/%d/%Y") <= period_end,
+                   filt_col=as.name(filt_col)))
+  #, !is.na(HOSPITALREPORT))  
+  
+  # Add period information to year dataframe if type == "sample"
+  if(type == "sample") {
+    if(period == "quarterly") {
+      year_df$PERIOD <- as.yearqtr(year_df[[filt_col]], format="%Y%m")
+    } else {
+      year_df$PERIOD  <- as.yearmon(year_df[[eval(filt_col)]], format="%Y%m")
+    }
+  }
+    
+  return(list(period_df, year_df))
   
 }
  
@@ -117,7 +169,3 @@ stopQuietly <- function(...) {
   stop(simpleError(blankMsg));
   
 } 
- 
-# Reformat start date and end date as dates
-start_date <- as.Date(start_date, "%m/%d/%Y")
-end_date <- as.Date(end_date, "%m/%d/%Y")
