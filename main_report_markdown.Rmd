@@ -64,15 +64,15 @@ if (nrow(unsats_final) > 0) {
 if (line_chart == 'quarterly') {
   
   # Plot percentage of samples received within 2 days over past 4 quarters
-  p1 <- ggplot(bound, aes(x=QUARTER, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
-    scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25), format = "%Y Q%q") +
+  p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25), format = "%Y Q%q") +
     scale_y_continuous(limits=c(min_transit_h, 100)) +
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(atop(.(title1), atop(italic(.(submitter)), "")))) + 
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     geom_hline(color="green4", aes(yintercept=95), size=1) +
-    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$QUARTER)) + .2), 
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$PERIOD)) + .2), 
                                           y=93, label="Goal: 95% of samples", vjust=1)) + 
     scale_color_manual(values=c("blue","grey59")) +
     theme(legend.title=element_blank()) + 
@@ -82,9 +82,9 @@ if (line_chart == 'quarterly') {
     theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
   
   # Plot percentage of unsatisfactory samples over past 4 quarters
-  p2 <- ggplot(bound, aes(x=QUARTER, y=unsat_percent, colour=SUBMITTERNAME, 
+  p2 <- ggplot(bound, aes(x=PERIOD, y=unsat_percent, colour=SUBMITTERNAME, 
                   group=rev(SUBMITTERNAME))) +
-    scale_x_yearqtr(breaks = seq(from = min(bound$QUARTER), to = max(bound$QUARTER), by = 0.25),
+    scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%Y Q%q") +
     scale_y_continuous(limits=c(0, max_unsat_h)) +
     labs(x="Quarter", y="Percentage") +
@@ -101,8 +101,8 @@ if (line_chart == 'quarterly') {
 } else {
   
    # Plot percentage of samples received within 2 days over past 12 months
-   p1 <- ggplot(bound, aes(x=MONTH, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
-    scale_x_yearmon(breaks = seq(from = min(bound$MONTH), to = max(bound$MONTH), by = 0.25),
+   p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%b %Y") +
     scale_y_continuous(limits=c(min_transit_h, 100)) +
     labs(x="Month", y="Percentage") +
@@ -111,7 +111,7 @@ if (line_chart == 'quarterly') {
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     geom_hline(color="green4", aes(yintercept=95), size=1) +
-    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$MONTH)) + .25), y=93, label="Goal: 95% of samples", vjust=1)) + 
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$PERIOD)) + .25), y=93, label="Goal: 95% of samples", vjust=1)) + 
     theme(legend.title=element_blank()) + 
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
@@ -119,9 +119,9 @@ if (line_chart == 'quarterly') {
     theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
  
 # Plot percentage of unsatisfactory samples over past 12 months
-  p2 <- ggplot(bound, aes(x=MONTH, y=unsat_percent, colour=SUBMITTERNAME, 
+  p2 <- ggplot(bound, aes(x=PERIOD, y=unsat_percent, colour=SUBMITTERNAME, 
                   group=rev(SUBMITTERNAME))) +
-    scale_x_yearmon(breaks = seq(from = min(bound$MONTH), to = max(bound$MONTH), by = 0.25),
+    scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%b %Y") +
     scale_y_continuous(limits=c(0, max_unsat_h)) +
     labs(x="Month", y="Percentage") +
