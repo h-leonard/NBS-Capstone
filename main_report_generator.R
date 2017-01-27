@@ -35,20 +35,21 @@ if (nrow(ID_test) != 0){
 }
  
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
-initial_dd <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
+initial_dd_prep <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
  
-# remove any records that have category listed as "Proficiency", "Treatment", or "Treatment - PKU"
-remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-if (!is.null(initial_dd$CATEGORY)) {initial_dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))}
+# join initial_dd with submitter file on submitter ID
+initial_dd <- left_join(initial_dd_prep, submitters, by="SUBMITTERID")
  
-# add hospitalreport name to dd
-dd <- left_join(initial_dd, submitters, by="SUBMITTERID")
+# create dataframes from prep_sample, filtered on start date and end date
+temp_sample_dfs <- create_filt_dfs(initial_dd, type="sample")
+dd <- as.data.frame(temp_sample_dfs[1])
+year_dd <- as.data.frame(temp_sample_dfs[2])
  
 # output report of all submitters not in VA NBS Report Card Hospital Names, 
 # with a count of samples, for determining if any submitters need to be
 # added to this file
-not_in_VA_NBS_hosp <- dd %>%
-  filter(is.na(HOSPITALREPORT), BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
+not_in_VA_NBS_hosp <- year_dd %>%
+  filter(is.na(HOSPITALREPORT)) %>%
   group_by(SUBMITTERID, SUBMITTERNAME) %>%
   select(SUBMITTERID, SUBMITTERNAME) %>%
   summarise(TOTAL=n()) %>%
@@ -57,11 +58,13 @@ not_in_VA_NBS_hosp <- dd %>%
 # write file to admin reports
 write.csv(not_in_VA_NBS_hosp, paste0(admin_path, "/submitters_not_in_VA_NBS_hospital_file.csv"))
  
-# replace submitter name with hospitalreport field
+# replace submitter name with hospitalreport field for dd and year_dd
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
+year_dd$SUBMITTERNAME <- year_dd$HOSPITALREPORT
  
 # remove records that have NA for submittername
 dd <- dd[!is.na(dd$HOSPITALREPORT),]
+year_dd <- year_dd[!is.na(year_dd$HOSPITALREPORT),]
  
 # set cutoff value for transit time (4 hours, or 1/6 of day)
 cutoff <- 1/6
@@ -71,7 +74,6 @@ cutoff <- 1/6
 # create data frame of required metrics for each submitter
 hospital_metrics <- dd %>%
   group_by(SUBMITTERNAME) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>% 
   select(SUBMITTERNAME, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
          UNSATCODE, TRANSFUSED) %>%
   summarise(
@@ -121,7 +123,6 @@ hospital_metrics$rank_unsats <- rank(hospital_metrics$unsat_percent, na.last="ke
 # get count of unsat codes for each submitter
 unsat_prep <- dd[!is.na(dd$UNSATCODE),] %>% 
   group_by(SUBMITTERNAME, UNSATCODE) %>%
-  filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   summarise(count = n())  
  
 # get all possibilities for unsat codes
@@ -172,120 +173,49 @@ state <- hospital_metrics %>%
     unsat_percent = round(mean(unsat_percent, na.rm=TRUE), 2)
   )
  
-##### CREATE DATA FRAMES FOR USE IN QUARTER PLOTS #####
-if (line_chart == "quarterly") {
-  quarter_end <- as.Date(as.yearqtr(end_date), frac=1)
-  
-  # filter dd to include one year of data (dated backwards from end date)
-  dd_plot <- filter(dd, BIRTHDATE > (quarter_end - years(1)) & 
-                      BIRTHDATE <= quarter_end, !is.na(HOSPITALREPORT))  
-  
-  # add quarter information to dd_plot
-  dd_plot$QUARTER <- as.yearqtr(dd_plot$BIRTHDATE, format="%Y%m")
+##### CREATE DATA FRAMES FOR USE IN PLOTS #####
  
-  # group by submitter and quarter
-  hospital_metrics_plot <- dd_plot %>%
-    group_by(SUBMITTERNAME, QUARTER) %>%
-    select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, QUARTER) %>%
-    summarise(
-      total_samples=n(),   
-      percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
-      unsat_count = sum(!is.na(UNSATCODE)),
-      unsat_percent = unsat_count/total_samples * 100
-    )
+# group by submitter and period
+hospital_metrics_plot <- year_dd %>%
+  group_by(SUBMITTERNAME, PERIOD) %>%
+  select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, PERIOD) %>%
+  summarise(
+    total_samples=n(),   
+    percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, 
+                                na.rm=TRUE)/sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
+    unsat_count = sum(!is.na(UNSATCODE)),
+    unsat_percent = unsat_count/total_samples * 100
+  )
   
-  ## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR QUARTER IN THE DATE RANGE OF INTEREST
+## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR QUARTER IN THE DATE RANGE OF INTEREST
   
-  # get a list of all quarters contained in the dataset
-  quarts <- unique(dd_plot$QUARTER)
+# create cross join of all possible quarters and all submitter names
+cross_join_periods <- CJ(SUBMITTERNAME=unique(year_dd$SUBMITTERNAME), PERIOD=unique(year_dd$PERIOD))
   
-  # create cross join of all possible quarters and all submitter names
-  cross_join_quarts <- CJ(SUBMITTERNAME=unique(dd_plot$SUBMITTERNAME), QUARTER=unique(dd_plot$QUARTER))
+# left join hospital_metrics_plot with cross_join_quarts so that we have NAs for hospitals 
+# with no data for a particular period
+hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_periods, 
+                                   by=c("SUBMITTERNAME", "PERIOD"))
   
-  # left join hospital_metrics_plot with cross_join_quarts so that we have NAs for hospitals 
-  # with no data for a particular quarter
-  hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_quarts, by=c("SUBMITTERNAME", "QUARTER"))
+#####
+# determine limits for y-axes by finding min for transit percent
+# and max overall unsat. For min_trainst_percent use the 2% percentile,
+# for max overall unsat use the 98% percentile.
+transit_percent_col <- grep("percent_rec_in_2_days", colnames(hospital_metrics_plot))
+unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
+min_transit_percent <- quantile(hospital_metrics_plot$percent_rec_in_2_days, 0.02, na.rm=TRUE)
+max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
   
-  #####
- 
-  # determine limits for y-axes by finding max for avg_transit_time
-  # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
-  # only the greatest value that is less than 4; for unsat percentage,
-  # use only the greatest value that is less than 10. 
-  transit_percent_col <- grep("percent_rec_in_2_days", colnames(hospital_metrics_plot))
-  unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  min_transit_percent <- quantile(hospital_metrics_plot$percent_rec_in_2_days, 0.02, na.rm=TRUE)
-  max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
-  
-  # Group by quarter for state totals
-  state_plot <- hospital_metrics_plot %>%
-    group_by(QUARTER) %>%
-    summarise(
-      total_samples = sum(total_samples, na.rm=TRUE),   
-      percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
-      unsat_count = sum(unsat_count, na.rm=TRUE),
-      unsat_percent = mean(unsat_percent, na.rm=TRUE)
-    )
-  state_plot$SUBMITTERNAME <- 'State'
-  
-}
-  
-##### CREATE DATA FRAMES FOR USE IN MONTH PLOTS #####
-if (line_chart == "monthly") {
-  month_end <- as.Date(as.yearmon(end_date), frac=1)
-  
-  # Filter dd to include one year of data (dated backwards from end date)
-  dd_plot <- filter(dd, BIRTHDATE > (month_end - years(1)) & 
-                      BIRTHDATE <= month_end, !is.na(HOSPITALREPORT))
-  
-  # add month information to dd_plot
-  dd_plot$MONTH <- as.yearmon(dd_plot$BIRTHDATE, format="%Y%m")
-  
-  # group by submitter and month
-  hospital_metrics_plot <- dd_plot %>%
-    group_by(SUBMITTERNAME, MONTH) %>%
-    select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, MONTH) %>%
-    summarise(
-      total_samples=n(),   
-      percent_rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100,
-      unsat_count = sum(!is.na(UNSATCODE)),
-      unsat_percent = unsat_count/total_samples * 100
-    )
-  
-  ## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR MONTH IN THE DATE RANGE OF INTEREST
-  
-  # get a list of all months contained in the dataset
-  months <- unique(dd_plot$MONTH)
-  
-  # create cross join of all possible months and all submitter names
-  cross_join_months <- CJ(SUBMITTERNAME=unique(dd_plot$SUBMITTERNAME), MONTH=unique(dd_plot$MONTH))
-  
-  # left join hospital_metrics_plot with cross_join_months so that we have NAs for hospitals with
-  # no data for a particular month
-  hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_months, by=c("SUBMITTERNAME", "MONTH"))
-  
-  #####
-  
-  # determine limits for y-axes by finding max for avg_transit_time
-  # and percentage of unsats and min for avg_transit_time. For avg_transit_time use
-  # only the greatest value that is less than 4; for unsat percentage,
-  # use only the greatest value that is less than 10. 
-  transit_percent_col <- grep("percent_rec_in_2_days", colnames(hospital_metrics_plot))
-  unsat_percent_col <- grep("unsat_percent", colnames(hospital_metrics_plot))
-  min_transit_percent <- quantile(hospital_metrics_plot$percent_rec_in_2_days, 0.02, na.rm=TRUE)
-  max_overall_unsat <- quantile(hospital_metrics_plot$unsat_percent, .98, na.rm=TRUE)
-  
-  # Group by month for state totals
-  state_plot <- hospital_metrics_plot %>%
-    group_by(MONTH) %>%
-    summarise(
-      total_samples = sum(total_samples, na.rm=TRUE),   
-      percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
-      unsat_count = sum(unsat_count, na.rm=TRUE),
-      unsat_percent = mean(unsat_percent, na.rm=TRUE)
-    )
-  state_plot$SUBMITTERNAME <- 'State'
-}
+# Group by period for state totals
+state_plot <- hospital_metrics_plot %>%
+  group_by(PERIOD) %>%
+  summarise(
+    total_samples = sum(total_samples, na.rm=TRUE),   
+    percent_rec_in_2_days = mean(percent_rec_in_2_days, na.rm=TRUE),
+    unsat_count = sum(unsat_count, na.rm=TRUE),
+    unsat_percent = mean(unsat_percent, na.rm=TRUE)
+  )
+state_plot$SUBMITTERNAME <- 'State'
  
 #######################################################
  
