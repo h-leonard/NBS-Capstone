@@ -50,27 +50,50 @@ write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
  
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
  
-# PREP FOR COLUMN 2: TOTAL COUNT OF DIAGNOSES THAT HAVE 
-# ANY HOSPITAL ASSOCIATIONS (counting each diagnosis
-# for each patient only once, pulling from any diagnosis )
-hosp_diag <- unique(diagnoses_temp[c("DIAGNOSIS","PATIENTID")]) %>%
-  group_by(DIAGNOSIS) %>%
-  summarise(
-    `HOSPITALCOUNT`=n()
-  )
+# HOSPITAL: get all unique patientID/diagnosis information from diagnoses_temp
+# (hospital diagnoses)
+diag_hosp <- unique(diagnoses_temp[c("DIAGNOSIS","PATIENTID")]) 
+ 
+# NON-HOSPTIAL: get all diagnoses associated with non-hospital submitters
+diag_non_hosp_temp <- dd_diag_init %>%
+  filter(!SUBMITTERID %in% submitters$SUBMITTERID) %>%
+  select(DIAGNOSIS, PATIENTID) 
+ 
+# NON-HOSPITAL: remove any duplicates
+diag_non_hosp <- unique(diag_non_hosp_temp[c("DIAGNOSIS","PATIENTID")]) 
+ 
+# BOTH HOSPITAL AND NON-HOSPITAL DIAGNOSES: get all diagnoses that both
+# hospitals and non-hospitals submitted samples for
+diag_both <- intersect(diag_hosp, diag_non_hosp)
+ 
+# REMOVE SAMPLES FROM HOSPITAL/NON-HOSPITAL THAT ARE IN diag_both
+diag_hosp_f <- anti_join(diag_hosp, diag_both)
+diag_non_hosp_f <- anti_join(diag_non_hosp, diag_both)
+ 
+# SUMMARISE HOSPITAL/NON-HOSPITAL/'BOTH' TO GET COUNTS
+diag_hosp_sum <- diag_hosp_f %>% group_by(DIAGNOSIS) %>%
+  summarise(`Hospital Count`=n())
+diag_non_hosp_sum <- diag_non_hosp_f %>% group_by(DIAGNOSIS) %>%
+  summarise(`Non-Hospital Count`=n())
+diag_both_sum <- diag_both %>% group_by(DIAGNOSIS) %>%
+  summarise(`Hospital and Non-Hospital Count`=n())
  
 # join full list of diagnoses to count of hospital diagnoses
 diag <- as.data.frame(diag_desc$DIAGNOSIS, stringsAsFactors = FALSE)
 names(diag) <- "DIAGNOSIS"
-diag <- left_join(diag, hosp_diag, by="DIAGNOSIS")
+diag <- diag %>%
+  left_join(diag_hosp_sum, by="DIAGNOSIS") %>%
+  left_join(diag_non_hosp_sum, by="DIAGNOSIS") %>%
+  left_join(diag_both_sum, by="DIAGNOSIS")
  
-# ADD ALL DIAGNOSES NOT MATCHED ON HOSPITAL
+# add totals to diagnoses table
+diag$`Total Count` <- rowSums(diag)
  
-# join diagnoses to initial_dd dataframe based on sampleID
-dd_diag_all <- left_join(dd_diag, initial_dd, by="SAMPLEID")
+# ADD TOTAL COUNT OF DIAGNOSES FOR HOSPITAL AND
+# NON-HOSPITAL SAMPLES
  
 # group diagnosis information by diagnosis and patient ID
-diagnoses_all_temp <- dd_diag_all %>%
+diagnoses_all_temp <- dd_diag_init %>%
   select(DIAGNOSIS, PATIENTID) %>%
   group_by(DIAGNOSIS, PATIENTID) %>%
   summarise()
@@ -122,7 +145,7 @@ state_h_samp <- dd %>%
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
     percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
+                                    sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = state_summary$met_goal,
     percent_met_goal = round((met_goal / tot_sub) * 100, 2),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
@@ -167,7 +190,7 @@ all_sub_metrics <- initial_dd_filt %>%
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
     percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
+                                    sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
@@ -229,7 +252,7 @@ state_all_samp <- initial_dd_filt %>%
     max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
     rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
     percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
-      sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
+                                    sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = state_all_sub$met_goal,
     percent_met_goal = round((met_goal / all_sub) * 100, 2),
     col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
