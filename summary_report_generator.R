@@ -67,8 +67,8 @@ diag_non_hosp <- unique(diag_non_hosp_temp[c("DIAGNOSIS","PATIENTID")])
 diag_both <- intersect(diag_hosp, diag_non_hosp)
  
 # REMOVE SAMPLES FROM HOSPITAL/NON-HOSPITAL THAT ARE IN diag_both
-diag_hosp_f <- anti_join(diag_hosp, diag_both)
-diag_non_hosp_f <- anti_join(diag_non_hosp, diag_both)
+diag_hosp_f <- anti_join(diag_hosp, diag_both, by = c("DIAGNOSIS", "PATIENTID"))
+diag_non_hosp_f <- anti_join(diag_non_hosp, diag_both, by = c("DIAGNOSIS", "PATIENTID"))
  
 # SUMMARISE HOSPITAL/NON-HOSPITAL/'BOTH' TO GET COUNTS
 diag_hosp_sum <- diag_hosp_f %>% group_by(DIAGNOSIS) %>%
@@ -86,35 +86,11 @@ diag <- diag %>%
   left_join(diag_non_hosp_sum, by="DIAGNOSIS") %>%
   left_join(diag_both_sum, by="DIAGNOSIS")
  
-# add totals to diagnoses table
-diag$`Total Count` <- rowSums(diag)
- 
-# ADD TOTAL COUNT OF DIAGNOSES FOR HOSPITAL AND
-# NON-HOSPITAL SAMPLES
- 
-# group diagnosis information by diagnosis and patient ID
-diagnoses_all_temp <- dd_diag_init %>%
-  select(DIAGNOSIS, PATIENTID) %>%
-  group_by(DIAGNOSIS, PATIENTID) %>%
-  summarise()
- 
-# Get count of separate diagnoses 
-diagnoses_all <- diagnoses_all_temp %>%
-  group_by(DIAGNOSIS) %>%
-  summarise(ALLCOUNT=n())
- 
-# join total count of diagnoses to count of hospital diagnoses
-diag <- left_join(diag, diagnoses_all, by="DIAGNOSIS")
- 
-# add column for non-hospital submitters
-diag$NONHOSPTIAL <- diag$ALLCOUNT - diag$HOSPITALCOUNT
- 
-# rearrange and rename columns
-diag <- diag[,c(1,2,4,3)]
-names(diag) <- c("Diagnosis","Hospital Count","Non-Hospital Count","Total Count")
- 
 # replace NAs with 0s
 diag[is.na(diag)] <- 0
+ 
+# add totals to diagnoses table
+diag$`Total Count` <- rowSums(diag[2:4])
  
 # Publish diagnosis summary to admin folder
 write.csv(diag, paste0(admin_path, "/diagnosis_summary.csv"))
