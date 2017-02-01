@@ -102,8 +102,6 @@ read_data <- function(folder, ...) {
     initial_dd$SUBMITTERID <- as.character(initial_dd$SUBMITTERID)
   }
   
-  df$species[df$depth<10]  <- "unknown" 
-  
   # Replace 9999 values in transit time column with NA
   if("TRANSITTIME" %in% names(initial_dd)) {
     initial_dd$TRANSIT_TIME[initial_dd$TRANSIT_TIME == 9999] <- NA
