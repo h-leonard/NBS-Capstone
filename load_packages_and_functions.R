@@ -1,7 +1,7 @@
 # Load packages and functions for Newborn Screening Hospital Reporting
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
- 
+
 libs <- c('xtable',
           'data.table',
           'stringr',
@@ -21,18 +21,18 @@ libs <- c('xtable',
           # 'mailR', - add this back in if we figure out solution for PC
           'readxl',
           'rmarkdown')
- 
+
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
     install.packages(l)
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
- 
+
 # Reformat start date and end date as dates
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
- 
+
 get_file_list <- function(folder) {
   
   # Returns list of files in a folder
@@ -44,7 +44,7 @@ get_file_list <- function(folder) {
   return(temp)
   
 }
- 
+
 get_file_extension <- function(folder) {
   
   # Returns the file extension of files in a folder. Assumes that all files have
@@ -60,7 +60,7 @@ get_file_extension <- function(folder) {
   return(data_type)
   
 }
- 
+
 read_data <- function(folder, ...) {
   
   # Returns dataframe of data. Optional arguments are columns to be reformatted as dates
@@ -102,6 +102,14 @@ read_data <- function(folder, ...) {
     initial_dd$SUBMITTERID <- as.character(initial_dd$SUBMITTERID)
   }
   
+  df$species[df$depth<10]  <- "unknown" 
+  
+  # Replace 9999 values in transit time column with NA
+  if("TRANSITTIME" %in% names(initial_dd)) {
+    initial_dd$TRANSIT_TIME[initial_dd$TRANSIT_TIME == 9999] <- NA
+  }
+  
+  
   # If dataframe has LINKID column, change this to PATIENTID - this will only be
   # an issue for the version of the data being used by UVA
   if("LINKID" %in% names(initial_dd)) {
@@ -116,7 +124,7 @@ read_data <- function(folder, ...) {
   return(initial_dd)
   
 }
- 
+
 create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date, e_date=end_date, period=line_chart) {
   
   # Given a dataframe, start date, and end date, returns 2 data frames filtered by
@@ -144,7 +152,6 @@ create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date,
     filter_(interp(~ as.Date(filt_col, format="%m/%d/%Y") > (period_end - years(1)) 
                    & as.Date(filt_col, format="%m/%d/%Y") <= period_end,
                    filt_col=as.name(filt_col)))
-  #, !is.na(HOSPITALREPORT))  
   
   # Add period information to year dataframe if type == "sample"
   if(type == "sample") {
@@ -158,7 +165,7 @@ create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date,
   return(list(period_df, year_df))
   
 }
- 
+
 stopQuietly <- function(...) {
   
   # Stops a source file quietly (without printing an error message), used in cases
