@@ -1,5 +1,12 @@
 ##### Change the settings below as needed #####
  
+# SET COMPUTER TYPE
+# Enter 'PC' or 'MAC'
+ 
+comp_type <- 'MAC'
+ 
+#########
+ 
 # SET WORKING DIRECTORY
 # This should be where you have all of your R code files stored
  
@@ -15,6 +22,7 @@ wd <- "/mnt/cpp4f/NBS_Report_Card/report_card_r_files"
 # same exact format (e.g., xlsx, xls, txt, or csv).
  
 sample_data_path <- "/mnt/cpp4f/Newborn_Screening_Data/Report_data"
+# sample_data_path <- "/mnt/cpp4f/Newborn_Screening_Data/Excel_data_for_testing"
  
 #########
  
@@ -81,7 +89,7 @@ end_date <- "09/30/2016"
 # Enter "quarterly" or "monthly" to define the parameters 
 # for the line chart for transit time and unsat count 
  
-line_chart <- "quarterly"
+line_chart <- "monthly"
  
 #########
  
@@ -96,8 +104,11 @@ test_report <- "N"
  
 # *** DO NOT CHANGE THIS CODE ***
  
+# SET FILE SEPARATOR
+slash <- ifelse(comp_type == 'PC', '\\', '/')
+ 
 # LOAD PACKAGES AND FUNCTIONS
-load_packages <- paste0(wd, "/load_packages_and_functions.R")
+load_packages <- paste0(wd, slash, "load_packages_and_functions.R")
 source(load_packages)
  
 # GENERATE LIST OF DIAGNOSES IN DATA SET THAT NEED NARRATIVES
@@ -105,13 +116,13 @@ source(load_packages)
 # TO THE FOLDER YOU DESIGNATE IN THE admin_path VARIABLE
 # ABOVE (make sure to run the load_packages above before running
 # this code)
-diag_narr_test <- paste0(wd, "/diagnosis_narrative_test.R")
+diag_narr_test <- paste0(wd, slash, "diagnosis_narrative_test.R")
 source(diag_narr_test)
  
 # RUN REPORTS
-report_run <- paste0(wd, "/main_report_generator.R")
-diag_run <- paste0(wd, "/diagnosis_report_generator.R")
-summary_run <- paste0(wd, "/summary_report_generator.R")
+report_run <- paste0(wd, slash, "main_report_generator.R")
+diag_run <- paste0(wd, slash, "diagnosis_report_generator.R")
+summary_run <- paste0(wd, slash, "summary_report_generator.R")
 source(report_run)
 source(diag_run)
 source(summary_run)
