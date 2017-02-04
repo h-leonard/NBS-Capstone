@@ -1,5 +1,5 @@
 # read in narratives for diagnoses
-diag_narr <- read.csv(paste(codes_path, "/", "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
+diag_narr <- read.csv(paste(codes_path, slash, "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
 diag_narr <- diag_narr[,2:3]
  
 # read in diagnosis data
@@ -25,5 +25,5 @@ need_narratives_list <- dd_diag_narr %>%
 need_narratives_list$`In Diagnosis List File?` <- ifelse(need_narratives_list$total > 0, "no", "yes")
 need_narratives_list$total <- NULL
  
-# write data frame of diagnoses needing narratives to 
-write.csv(need_narratives_list, paste0(admin_path, "/need_narratives.csv"))
+# write data frame of diagnoses needing narratives to admin folder
+write.csv(need_narratives_list, paste0(admin_path, slash, "need_narratives.csv"))
