@@ -46,7 +46,7 @@ hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` <-
   ifelse(hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
  
 # Write to csv for now - may ultimately want to write to Excel
-write.csv(hosp_summary, paste0(admin_path, "/hosp_summary.csv"))
+write.csv(hosp_summary, paste0(admin_path, slash, "hosp_summary.csv"))
  
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
  
@@ -68,7 +68,7 @@ diag <- left_join(diag, diag_all_count, by="DIAGNOSIS")
 diag[is.na(diag)] <- 0
  
 # Publish diagnosis summary to admin folder
-write.csv(diag, paste0(admin_path, "/diagnosis_summary.csv"))
+write.csv(diag, paste0(admin_path, slash, "diagnosis_summary.csv"))
  
 ##### PREPARE SUMMARY REPORT - STATE #####
  
@@ -237,7 +237,7 @@ names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
                           "ALL SUBMITTERS: Averaged over samples")
  
 # Publish state summary to admin folder
-write.csv(state_summary, paste0(admin_path, "/state_summary.csv"))
+write.csv(state_summary, paste0(admin_path, slash, "state_summary.csv"))
  
 ##### PREPARE OUTLIER TRANSIT TIME REPORT #####
  
@@ -245,4 +245,4 @@ time_outliers <- initial_dd %>%
   filter(TRANSIT_TIME > 10, BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   arrange(desc(TRANSIT_TIME))
  
-write.csv(time_outliers, paste0(admin_path, "/transit_time_outliers.csv"))
+write.csv(time_outliers, paste0(admin_path, slash, "transit_time_outliers.csv"))
