@@ -1,7 +1,7 @@
 # Load packages and functions for Newborn Screening Hospital Reporting
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
-
+ 
 libs <- c('xtable',
           'data.table',
           'stringr',
@@ -18,21 +18,21 @@ libs <- c('xtable',
           'shiny',
           'lazyeval',
           'toOrdinal',
-          # 'mailR', - add this back in if we figure out solution for PC
           'readxl',
-          'rmarkdown')
-
+          # 'RDCOMClient' Uncomment this code when running on PC
+          'rmarkdown') 
+ 
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
     install.packages(l)
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
-
+ 
 # Reformat start date and end date as dates
 start_date <- as.Date(start_date, "%m/%d/%Y")
 end_date <- as.Date(end_date, "%m/%d/%Y")
-
+ 
 get_file_list <- function(folder) {
   
   # Returns list of files in a folder
@@ -44,7 +44,7 @@ get_file_list <- function(folder) {
   return(temp)
   
 }
-
+ 
 get_file_extension <- function(folder) {
   
   # Returns the file extension of files in a folder. Assumes that all files have
@@ -60,7 +60,7 @@ get_file_extension <- function(folder) {
   return(data_type)
   
 }
-
+ 
 read_data <- function(folder, ...) {
   
   # Returns dataframe of data. Optional arguments are columns to be reformatted as dates
@@ -122,7 +122,7 @@ read_data <- function(folder, ...) {
   return(initial_dd)
   
 }
-
+ 
 create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date, e_date=end_date, period=line_chart) {
   
   # Given a dataframe, start date, and end date, returns 2 data frames filtered by
@@ -163,7 +163,33 @@ create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date,
   return(list(period_df, year_df))
   
 }
-
+ 
+sendEmail <- function(to, subject, msgBody, file=NULL) {
+  
+  # Sends emails through Outlook client. Outlook needs to be open and will
+  # prompt the user whether to allow an application to send email.
+  
+  OutApp = COMCreate("Outlook.Application")
+  
+  OutMail = OutApp$CreateItem(0)
+  
+  OutMail[["To"]] = To
+  
+  OutMail[["Subject"]] = subject
+  
+  OutMail[["Body"]]=msgBody
+  
+  if(!is.null(file) && file != hospital_path) {
+    for (f in file) {
+      OutMail[["Attachments"]]$Add(f)
+    }
+  }
+  
+  # Send email
+  OutMail$Send()
+  
+}
+ 
 stopQuietly <- function(...) {
   
   # Stops a source file quietly (without printing an error message), used in cases
