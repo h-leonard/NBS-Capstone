@@ -4,16 +4,16 @@
 # AND ALSO RUN THIS FILE.
  
 # read in unsats csv file
-unsats <- read.csv(paste(codes_path, "/", "unsat_codes.csv", sep=""))
+unsats <- read.csv(paste(codes_path, slash, "unsat_codes.csv", sep=""))
  
 # read in submitter names as we wish them to appear in the report
-temp <- paste(codes_path, "/", "VA NBS Report Card Hospital Names.csv", sep="")
+temp <- paste(codes_path, slash, "VA NBS Report Card Hospital Names.csv", sep="")
 submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
 # read in individual messages to hospitals to be included in report
-messages <- read.csv(paste(codes_path, "/", "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
+messages <- read.csv(paste(codes_path, slash, "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
 messages <- messages[messages$Message != "",]
  
 # test for IDs assigned to multiple hospitals in submitters
@@ -56,7 +56,10 @@ not_in_VA_NBS_hosp <- year_dd %>%
   arrange(desc(TOTAL))
  
 # write file to admin reports
-write.csv(not_in_VA_NBS_hosp, paste0(admin_path, "/submitters_not_in_VA_NBS_hospital_file.csv"))
+write.csv(not_in_VA_NBS_hosp, paste0(admin_path, slash, "submitters_not_in_VA_NBS_hospital_file.csv"))
+ 
+# prep data frame of non-hospital info for use in summary reporting
+non_dd <- dd[is.na(dd$HOSPITALREPORT),]
  
 # replace submitter name with hospitalreport field for dd and year_dd
 dd$SUBMITTERNAME <- dd$HOSPITALREPORT
@@ -175,7 +178,7 @@ state <- hospital_metrics %>%
  
 ##### CREATE DATA FRAMES FOR USE IN PLOTS #####
  
-# group by submitter and period
+# Group by submitter and period
 hospital_metrics_plot <- year_dd %>%
   group_by(SUBMITTERNAME, PERIOD) %>%
   select(SUBMITTERNAME, TRANSIT_TIME, UNSATCODE, PERIOD) %>%
@@ -187,18 +190,19 @@ hospital_metrics_plot <- year_dd %>%
     unsat_percent = unsat_count/total_samples * 100
   )
   
-## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR QUARTER IN THE DATE RANGE OF INTEREST
+## ADDRESS HOSPITALS WITH NO DATA FOR ANY PARTICULAR PERIOD IN THE DATE RANGE OF INTEREST
   
-# create cross join of all possible quarters and all submitter names
+# Create cross join of all possible periods and all submitter names
 cross_join_periods <- CJ(SUBMITTERNAME=unique(year_dd$SUBMITTERNAME), PERIOD=unique(year_dd$PERIOD))
   
-# left join hospital_metrics_plot with cross_join_quarts so that we have NAs for hospitals 
+# Left join hospital_metrics_plot with cross_join_quarts so that we have NAs for hospitals 
 # with no data for a particular period
 hospital_metrics_plot <- full_join(hospital_metrics_plot, cross_join_periods, 
                                    by=c("SUBMITTERNAME", "PERIOD"))
+ 
+####
   
-#####
-# determine limits for y-axes by finding min for transit percent
+# Determine limits for y-axes by finding min for transit percent
 # and max overall unsat. For min_trainst_percent use the 2% percentile,
 # for max overall unsat use the 98% percentile.
 transit_percent_col <- grep("percent_rec_in_2_days", colnames(hospital_metrics_plot))
@@ -219,12 +223,12 @@ state_plot$SUBMITTERNAME <- 'State'
  
 #######################################################
  
-# Change hospital metrics to include only a single submitter (if we are only testing the functionality rather
-# than running all reports)
+# Change hospital metrics to include only a single submitter (if we are only testing the functionality 
+# rather than running all reports)
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
  
 # Generate report for each hospital
-render_file <- paste(wd, "/", "main_report_markdown.Rmd", sep="")
+render_file <- paste(wd, slash, "main_report_markdown.Rmd", sep="")
  
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
