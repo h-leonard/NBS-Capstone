@@ -1,5 +1,5 @@
 # load in email addresses for hospitals
-emails <- read.csv(paste(codes_path, "/", "hospital_emails.csv", sep=""), stringsAsFactors=FALSE,
+emails <- read.csv(paste(codes_path, slash, "hospital_emails.csv", sep=""), stringsAsFactors=FALSE,
                    header=TRUE)
  
 # remove rows with no email addresses
@@ -15,8 +15,7 @@ test_email_recipient <- "ellemsee@gmail.com"
 email_end <- ifelse(testing == 'Y', 1, nrow(emails))
  
 for (i in 1:email_end) {
-  attachments <- paste(hospital_path, "/",
-                       list.files(hospital_path, 
+  attachments <- paste(hospital_path, slash, list.files(hospital_path, 
                                   pattern=paste0(emails$Hospital[i], "*")), sep="")
   if(!is.list(attachments) && attachments == hospital_path) next
   recipients <- ifelse(testing == 'Y', test_email_recipient, emails$Email[i])
