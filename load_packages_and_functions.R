@@ -39,7 +39,7 @@ get_file_list <- function(folder) {
   
   # get list of files within folder
   files <- list.files(folder)
-  temp <- paste0(folder, "/", files)
+  temp <- paste0(folder, slash, files)
   
   return(temp)
   
