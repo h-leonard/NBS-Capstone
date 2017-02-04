@@ -2,28 +2,30 @@
 if(nrow(ID_test) != 0) {stopQuietly()}
  
 # read in descriptions of diagnoses for use in report
-diag_desc <- read.csv(paste(codes_path, "/", "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
+diag_desc <- read.csv(paste(codes_path, slash, "diagnosis_descriptions.csv", sep=""), stringsAsFactors = FALSE)
 diag_desc <- diag_desc[,2:3]
  
 # read in sample data and reformat DIAGNOSISDATE as dates
 initial_dd_diag <- read_data(diag_data_path, "DIAGNOSISDATE")
  
 # filter diagnoses based on start date and end date
-dd_diag <- initial_dd_diag %>%
-  filter(DIAGNOSISDATE >= start_date & DIAGNOSISDATE <= end_date)
+temp_dd_diag <- create_filt_dfs(initial_dd_diag, type="diagnosis")
+dd_diag <- as.data.frame(temp_dd_diag[1])
  
-# join diagnoses to dd dataframe based on sampleID
-dd_diag_hosp <- inner_join(dd_diag, dd, by="SAMPLEID")
+# join diagnoses to initial_dd dataframe based on sampleID
+dd_diag_init <- left_join(dd_diag, initial_dd, by="SAMPLEID")
+dd_diag_hosp <- dd_diag_init[dd_diag_init$SUBMITTERID %in% submitters$SUBMITTERID,]
+dd_diag_hosp$SUBMITTERNAME <- dd_diag_hosp$HOSPITALREPORT
  
 # Select columns from dd_diag_hosp for report, get count of each diagnosis
 # NOTE: if a diagnosis is associated with more than one hospital (e.g., 
 # because the infant was born at a particular hospital, transferred
 # to another hospital, and both submitted samples that ended up being
-# associate with a diagnosis), ALL hospitals submitting samples associated
+# associated with a diagnosis), ALL hospitals submitting samples associated
 # with a diagnosis will be 'credited' with this on their reports. For this
-# reason, we will NOT want to get a sum of the diagnoses in this dataframe
-# to count the total number of diagnoses, as some will be counted multiple 
-# times
+# reason, we will NOT want to use a sum of the diagnoses in this dataframe
+# to count the total number of diagnoses, as this method will count some
+# diagnoses more than once.
 diagnoses_temp <- dd_diag_hosp %>%
   select(DIAGNOSIS, SUBMITTERNAME, PATIENTID) %>%
   group_by(SUBMITTERNAME, DIAGNOSIS, PATIENTID) %>%
@@ -48,7 +50,7 @@ dates <- paste(gsub(" 0", " ", format(start_date, format="%B %d, %Y")), " - ",
 diag_info <- inner_join(diagnoses, diag_desc, by="DIAGNOSIS")
  
 # Generate report for each hospital
-render_file_diag <- paste(wd, "/", "diagnosis_markdown.Rmd", sep="")
+render_file_diag <- paste(wd, slash, "diagnosis_markdown.Rmd", sep="")
  
 for (submitter in diagnoses$SUBMITTERNAME){
   rmarkdown::render(input = render_file_diag, 
