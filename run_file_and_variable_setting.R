@@ -102,6 +102,20 @@ test_report <- "N"
  
 #########
  
+# RUN ONLY REPORTS FOR SPECIFIC HOSPITALS
+# If you want to run all reports or only a test report, keep the value
+# of this variable as NULL. If you want to run a report for a specific hospital
+# or set of hospitals, enter their names. IMPORTANT: the names as entered
+# should match the VA NBS Report Card Hospital Names.csv exactly.
+#   Format for keeping this variable blank (so all reports run): NULL
+#   Format for entering a single hospital: "Augusta Health"
+#   Format for entering multiple hospitals: c("Augusta Health","Naval Medical Center - Portsmouth")
+ 
+# only_run <- c("Augusta Health","Naval Medical Center - Portsmouth")
+only_run <- NULL
+ 
+#########
+ 
 # *** DO NOT CHANGE THIS CODE ***
  
 # SET FILE SEPARATOR
