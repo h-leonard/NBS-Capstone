@@ -17,7 +17,8 @@ messages <- read.csv(paste(codes_path, slash, "hospital_messages.csv", sep=""), 
 messages <- messages[messages$Message != "",]
  
 # test for IDs assigned to multiple hospitals in submitters
-ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, fromLast=TRUE)),]
+ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, 
+                                                                       fromLast=TRUE)),]
  
 # stop report if duplicate IDs are discovered
 if (nrow(ID_test) != 0){
@@ -226,6 +227,9 @@ state_plot$SUBMITTERNAME <- 'State'
 # Change hospital metrics to include only a single submitter (if we are only testing the functionality 
 # rather than running all reports)
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
+ 
+# Change hospital metrics to include only the submitters indicated if only_run is not ""
+if (!is.null(only_run)) hospital_metrics = filter(hospital_metrics, SUBMITTERNAME %in% only_run)
  
 # Generate report for each hospital
 render_file <- paste(wd, slash, "main_report_markdown.Rmd", sep="")
