@@ -20,7 +20,7 @@ libs <- c('xtable',
           'toOrdinal',
           'readxl',
           # 'RDCOMClient' Uncomment this code when running on PC
-          'rmarkdown') 
+          'rmarkdown')
  
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
@@ -106,7 +106,6 @@ read_data <- function(folder, ...) {
   if("TRANSITTIME" %in% names(initial_dd)) {
     initial_dd$TRANSIT_TIME[initial_dd$TRANSIT_TIME == 9999] <- NA
   }
-  
   
   # If dataframe has LINKID column, change this to PATIENTID - this will only be
   # an issue for the version of the data being used by UVA
