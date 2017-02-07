@@ -42,6 +42,9 @@ diagnoses <- diagnoses_temp %>%
 # than running all reports)
 if (test_report == "Y") diagnoses = diagnoses[diagnoses$SUBMITTERNAME == diagnoses$SUBMITTERNAME[1],]
  
+# Change diagnosis report to include only the submitters indicated if only_run is not ""
+if (!is.null(only_run)) diagnoses = filter(diagnoses, SUBMITTERNAME %in% only_run)
+ 
 # Get date range for report
 dates <- paste(gsub(" 0", " ", format(start_date, format="%B %d, %Y")), " - ", 
                   gsub(" 0", " ", format(end_date, format="%B %d, %Y")), sep="")
