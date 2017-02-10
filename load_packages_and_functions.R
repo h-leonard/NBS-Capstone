@@ -19,7 +19,7 @@ libs <- c('xtable',
           'lazyeval',
           'toOrdinal',
           'readxl',
-          # 'RDCOMClient' Uncomment this code when running on PC
+          # 'RDCOMClient', Uncomment this code when running on PC
           'rmarkdown')
  
 for (l in libs) {
@@ -172,7 +172,7 @@ sendEmail <- function(to, subject, msgBody, file=NULL) {
   
   OutMail = OutApp$CreateItem(0)
   
-  OutMail[["To"]] = To
+  OutMail[["To"]] = to
   
   OutMail[["Subject"]] = subject
   
