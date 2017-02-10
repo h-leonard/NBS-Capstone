@@ -51,7 +51,7 @@ write.csv(hosp_summary, paste0(admin_path, slash, "hosp_summary.csv"))
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
  
 # Get all unique diagnosis/patient combinations for period of interest
-diag_all <- dd_diag_init %>%
+diag_all <- dd_diag %>%
   group_by(DIAGNOSIS, PATIENTID) %>%
   summarise()
  
