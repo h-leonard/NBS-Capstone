@@ -1,7 +1,7 @@
 # Load packages and functions for Newborn Screening Hospital Reporting
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
- 
+
 libs <- c('xtable',
           'data.table',
           'stringr',
@@ -19,20 +19,22 @@ libs <- c('xtable',
           'lazyeval',
           'toOrdinal',
           'readxl',
-          # 'RDCOMClient', Uncomment this code when running on PC
+          # 'RDCOMClient' Uncomment this code when running on PC
           'rmarkdown')
- 
+
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
     install.packages(l)
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
- 
+
 # Reformat start date and end date as dates
-start_date <- as.Date(start_date, "%m/%d/%Y")
-end_date <- as.Date(end_date, "%m/%d/%Y")
- 
+if (exists("start_date")) {
+  start_date <- as.Date(start_date, "%m/%d/%Y")
+  end_date <- as.Date(end_date, "%m/%d/%Y")
+}
+
 get_file_list <- function(folder) {
   
   # Returns list of files in a folder
@@ -44,7 +46,7 @@ get_file_list <- function(folder) {
   return(temp)
   
 }
- 
+
 get_file_extension <- function(folder) {
   
   # Returns the file extension of files in a folder. Assumes that all files have
@@ -60,7 +62,7 @@ get_file_extension <- function(folder) {
   return(data_type)
   
 }
- 
+
 read_data <- function(folder, ...) {
   
   # Returns dataframe of data. Optional arguments are columns to be reformatted as dates
@@ -80,7 +82,7 @@ read_data <- function(folder, ...) {
   if (ext == ".xlsx" | ext == ".xls") {
     initial_dd <- do.call(rbind, lapply(temp, function(x) read_excel(x, sheet = 1)))
   } else {
-    initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator)))
+    initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1")))
   }
   
   # Reformat any POSIXct columns as dates
@@ -92,7 +94,7 @@ read_data <- function(folder, ...) {
   if (!is.null(date_reformat)) {
     for (i in date_reformat) {
       if (class(initial_dd[,eval(i)][[1]]) != "Date") {
-        initial_dd[,i] <- as.Date(initial_dd[,i], "%m/%d/%Y", origin = "1904-01-01")
+        initial_dd[,i] <- as.Date(initial_dd[,i], "%m/%d/%Y", origin = "1900-01-01")
       }
     }
   }
@@ -116,12 +118,12 @@ read_data <- function(folder, ...) {
   # If dataframe has CATEGORY column, remove any records that have category listed as "Proficiency", 
   # "Treatment", or "Treatment - PKU"
   remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
-  if (!is.null(initial_dd$CATEGORY)) {initial_dd <- filter(initial_dd, !(CATEGORY %in% remove_cats))}
+  if (!is.null(initial_dd$CATEGORY)) {initial_dd <- initial_dd[!(initial_dd$CATEGORY %in% remove_cats),]}
   
   return(initial_dd)
   
 }
- 
+
 create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date, e_date=end_date, period=line_chart) {
   
   # Given a dataframe, start date, and end date, returns 2 data frames filtered by
@@ -162,7 +164,7 @@ create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date,
   return(list(period_df, year_df))
   
 }
- 
+
 sendEmail <- function(to, subject, msgBody, file=NULL) {
   
   # Sends emails through Outlook client. Outlook needs to be open and will
@@ -188,7 +190,7 @@ sendEmail <- function(to, subject, msgBody, file=NULL) {
   OutMail$Send()
   
 }
- 
+
 stopQuietly <- function(...) {
   
   # Stops a source file quietly (without printing an error message), used in cases
