@@ -22,7 +22,6 @@ wd <- "/mnt/cpp4f/NBS_Report_Card/report_card_r_files"
 # same exact format (e.g., xlsx, xls, txt, or csv).
  
 sample_data_path <- "/mnt/cpp4f/Newborn_Screening_Data/Report_data"
-# sample_data_path <- "/mnt/cpp4f/Newborn_Screening_Data/Excel_data_for_testing"
  
 #########
  
@@ -76,12 +75,20 @@ admin_path <- "/mnt/cpp4f/NBS_Report_Card/admin_reports"
  
 ########
  
+# INCLUDE MIN AND MAX TRANSIT TIMES
+# Enter 'Y' if you wish to include these in the hospital reports;
+# otherwise enter 'N'.
+ 
+min_max <- "N"
+ 
+########
+ 
 # DATES FOR REPORT
 # Enter the dates you want to use for generating the hospital reports
 # Use "mm/dd/yyyy" format (e.g., "04/01/2016")
  
-start_date <- "07/01/2016"
-end_date <- "09/30/2016"
+start_date <- "01/01/2016"
+end_date <- "12/31/2016"
  
 ########
  
@@ -112,7 +119,8 @@ test_report <- "N"
 #   Format for entering multiple hospitals: c("Augusta Health","Naval Medical Center - Portsmouth")
  
 # only_run <- c("Augusta Health","Naval Medical Center - Portsmouth")
-only_run <- NULL
+# only_run <- "Naval Medical Center - Portsmouth"
+# only_run <- NULL
  
 #########
  
