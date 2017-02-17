@@ -14,7 +14,7 @@ submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
 # read in individual messages to hospitals to be included in report
 messages <- read.csv(paste(codes_path, slash, "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
-messages <- messages[messages$Message != "",]
+messages <- messages[!is.na(messages$Message),]
  
 # test for IDs assigned to multiple hospitals in submitters
 ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, 
@@ -228,11 +228,12 @@ state_plot$SUBMITTERNAME <- 'State'
 # rather than running all reports)
 if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
  
-# Change hospital metrics to include only the submitters indicated if only_run is not ""
+# Change hospital metrics to include only the submitters indicated if only_run is not NULL
 if (!is.null(only_run)) hospital_metrics = filter(hospital_metrics, SUBMITTERNAME %in% only_run)
  
 # Generate report for each hospital
-render_file <- paste(wd, slash, "main_report_markdown.Rmd", sep="")
+render_file <- ifelse(min_max == 'Y', paste(wd, slash, "main_report_markdown_WITH_MINMAX.Rmd", sep=""), 
+                      paste(wd, slash, "main_report_markdown.Rmd", sep=""))
  
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
