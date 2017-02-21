@@ -60,6 +60,7 @@ render_file_diag <- paste(wd, slash, "diagnosis_markdown.Rmd", sep="")
 for (submitter in diagnoses$SUBMITTERNAME){
   rmarkdown::render(input = render_file_diag, 
                     output_format = "pdf_document",
-                    output_file = paste(submitter, "_DiagnosisReport_", Sys.Date(), ".pdf", sep=''),
+                    output_file = paste(submitter, "_Diagnoses_", 
+                                        start_date, "_", end_date, ".pdf", sep=''),
                     output_dir = hospital_path)
 }
