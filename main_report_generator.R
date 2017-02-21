@@ -238,6 +238,7 @@ render_file <- ifelse(min_max == 'Y', paste(wd, slash, "main_report_markdown_WIT
 for (submitter in hospital_metrics$SUBMITTERNAME){
   rmarkdown::render(input = render_file, 
                     output_format = "pdf_document",
-                    output_file = paste(submitter, "_", Sys.Date(), ".pdf", sep=''),
+                    output_file = paste(submitter, "_", as.character(start_date, format="%m-%d-%y"), "_", 
+                                        as.character(end_date, format="%m-%d-%y"), ".pdf", sep=''),
                     output_dir = hospital_path)
 }
