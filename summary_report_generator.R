@@ -262,5 +262,5 @@ time_outliers <- initial_dd %>%
  
 write.csv(time_outliers, paste0(admin_path, slash, "transit_time_outliers.csv"))
  
-# Reset run_pdfs
-run_pdfs <- NULL
+# Remove run_pdfs
+rm(run_pdfs)
