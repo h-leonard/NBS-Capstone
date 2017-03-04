@@ -87,7 +87,7 @@ min_max <- "N"
 # Enter the dates you want to use for generating the hospital reports
 # Use "mm/dd/yyyy" format (e.g., "04/01/2016")
  
-start_date <- "01/01/2016"
+start_date <- "10/01/2016"
 end_date <- "12/31/2016"
  
 ########
@@ -105,7 +105,7 @@ line_chart <- "monthly"
 # or do you want reports for all submitters? Enter "Y" if you wish to run
 # only a single report, "N" otherwise
  
-test_report <- "N"
+test_report <- "Y"
  
 #########
  
@@ -120,7 +120,7 @@ test_report <- "N"
  
 # only_run <- c("Augusta Health","Naval Medical Center - Portsmouth")
 # only_run <- "Naval Medical Center - Portsmouth"
-# only_run <- NULL
+only_run <- NULL
  
 #########
  
@@ -128,10 +128,6 @@ test_report <- "N"
  
 # SET FILE SEPARATOR
 slash <- ifelse(comp_type == 'PC', '\\', '/')
- 
-# LOAD PACKAGES AND FUNCTIONS
-load_packages <- paste0(wd, slash, "load_packages_and_functions.R")
-source(load_packages)
  
 # GENERATE LIST OF DIAGNOSES IN DATA SET THAT NEED NARRATIVES
 # BEFORE RUNNING DIAGNOSIS REPORTS - THIS WILL OUTPUT A CSV
@@ -143,8 +139,10 @@ source(diag_narr_test)
  
 # RUN REPORTS
 report_run <- paste0(wd, slash, "main_report_generator.R")
-diag_run <- paste0(wd, slash, "diagnosis_report_generator.R")
-summary_run <- paste0(wd, slash, "summary_report_generator.R")
 source(report_run)
+ 
+diag_run <- paste0(wd, slash, "diagnosis_report_generator.R")
 source(diag_run)
+ 
+summary_run <- paste0(wd, slash, "summary_report_generator.R")
 source(summary_run)
