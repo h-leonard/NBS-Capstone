@@ -1,7 +1,6 @@
 ---
 output:
     pdf_document
-always_allow_html: yes
 ---
 ---
 title: `r submitter`
@@ -22,7 +21,7 @@ max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
 min_transit_h <- min(min_transit_percent, h_plot$percent_rec_in_2_days)
 bound <- rbind(h_plot, state_plot)
 title1 = "Percentage of Samples Received\nwithin Two Days of Collection"
-title2 = " Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
+title2 = "Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
 ```
  
 |      | Hospital || Hospital Rank | Virginia |
@@ -61,6 +60,7 @@ if (line_chart == 'quarterly') {
   p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
     scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25), format = "%Y Q%q") +
     scale_y_continuous(limits=c(min_transit_h, 100)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(.(title1))) + 
     geom_line(size=2) +
@@ -72,7 +72,6 @@ if (line_chart == 'quarterly') {
     theme(legend.title=element_blank()) + 
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
-    theme(plot.title = element_text(size = 10, face = "plain")) +
     theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
   
   # Plot percentage of unsatisfactory samples over past 4 quarters
@@ -83,13 +82,13 @@ if (line_chart == 'quarterly') {
     scale_y_continuous(limits=c(0, max_unsat_h)) +
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(.(title2))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     theme(legend.title=element_blank()) +
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
-    theme(plot.title = element_text(size = 10, face = "plain")) +
     theme(plot.margin = unit(c(0.6,0.3,0.3,0.5), "cm"))
   
 } else {
@@ -101,6 +100,7 @@ if (line_chart == 'quarterly') {
     scale_y_continuous(limits=c(min_transit_h, 100)) +
     labs(x="Month", y="Percentage") +
     ggtitle(bquote(.(title1))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
@@ -109,7 +109,6 @@ if (line_chart == 'quarterly') {
     theme(legend.title=element_blank()) + 
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
-    theme(plot.title = element_text(size = 10, face = "plain")) +
     theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
  
 # Plot percentage of unsatisfactory samples over past 12 months
@@ -120,13 +119,13 @@ if (line_chart == 'quarterly') {
     scale_y_continuous(limits=c(0, max_unsat_h)) +
     labs(x="Month", y="Percentage") +
     ggtitle(bquote(.(title2))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
     geom_line(size=2) +
     geom_point(data=bound[bound$SUBMITTERNAME == 'Hospital',]) +
     scale_color_manual(values=c("blue","grey59")) +
     theme(legend.title=element_blank()) +
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
-    theme(plot.title = element_text(size = 10, face = "plain")) +
     theme(plot.margin = unit(c(0.6,0.3,0.3,0.5), "cm"))
 }
  
