@@ -3,37 +3,16 @@
 # IF YOU RUN THAT FILE, IT WILL ALLOW YOU TO SET YOUR FILE LOCATIONS
 # AND ALSO RUN THIS FILE.
  
+# Source load_packages file
+load_packages <- paste0(wd, slash, "load_packages_and_functions.R")
+source(load_packages)
+ 
 # read in unsats csv file
 unsats <- read.csv(paste(codes_path, slash, "unsat_codes.csv", sep=""))
- 
-# read in submitter names as we wish them to appear in the report
-temp <- paste(codes_path, slash, "VA NBS Report Card Hospital Names.csv", sep="")
-submitters <- as.data.frame(read.csv(temp, sep=","))
-names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
-submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
  
 # read in individual messages to hospitals to be included in report
 messages <- read.csv(paste(codes_path, slash, "hospital_messages.csv", sep=""), stringsAsFactors = FALSE)
 messages <- messages[!is.na(messages$Message),]
- 
-# test for IDs assigned to multiple hospitals in submitters
-ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, 
-                                                                       fromLast=TRUE)),]
- 
-# stop report if duplicate IDs are discovered
-if (nrow(ID_test) != 0){
-  e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
-  e_verb <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "is", "are")
-  e_messages <- ""
-    for (id in unique(ID_test$SUBMITTERID)) {
-      temp_hosps <- ID_test$HOSPITALREPORT[ID_test$SUBMITTERID == id]
-      test_hs <- paste0("\nHOSPITALS:     ", paste(temp_hosps, collapse=", "), "\n")
-      test_ids <- paste0("DUPLICATED ID: ", id, "\n")
-      e_messages <- paste0(e_messages, paste0(test_hs, test_ids))
-    }
-  {stop(sprintf("%s in 'VA NBS Report Card Hospital Names' %s assigned to more than one hospital:\n%s\nPlease correct in 'VA NBS Report Card Hospital Names' before running reports.", 
-                e_begin, e_verb, e_messages)) }
-}
  
 # read in sample data and reformat COLLECTIONDATE and BIRTHDATE as dates
 initial_dd_prep <- read_data(sample_data_path, "COLLECTIONDATE", "BIRTHDATE")
@@ -224,21 +203,27 @@ state_plot$SUBMITTERNAME <- 'State'
  
 #######################################################
  
-# Change hospital metrics to include only a single submitter (if we are only testing the functionality 
-# rather than running all reports)
-if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
+# Run reports if not sourcing this file from summary_report_generator (which
+# sets the value of run_pdfs)
+if (!exists("run_pdfs")) {
  
-# Change hospital metrics to include only the submitters indicated if only_run is not NULL
-if (!is.null(only_run)) hospital_metrics = filter(hospital_metrics, SUBMITTERNAME %in% only_run)
+  # Change hospital metrics to include only a single submitter (if we are only testing the functionality 
+  # rather than running all reports)
+  if (test_report == "Y") hospital_metrics = hospital_metrics[1,]
  
-# Generate report for each hospital
-render_file <- ifelse(min_max == 'Y', paste(wd, slash, "main_report_markdown_WITH_MINMAX.Rmd", sep=""), 
+  # Change hospital metrics to include only the submitters indicated if only_run is not NULL
+  if (!is.null(only_run)) hospital_metrics = filter(hospital_metrics, SUBMITTERNAME %in% only_run)
+ 
+  # Generate report for each hospital
+  render_file <- ifelse(min_max == 'Y', paste(wd, slash, "main_report_markdown_WITH_MINMAX.Rmd", sep=""), 
                       paste(wd, slash, "main_report_markdown.Rmd", sep=""))
  
-for (submitter in hospital_metrics$SUBMITTERNAME){
-  rmarkdown::render(input = render_file, 
-                    output_format = "pdf_document",
-                    output_file = paste(submitter, "_", start_date, "_", 
-                                        end_date, ".pdf", sep=''),
-                    output_dir = hospital_path)
+  for (submitter in hospital_metrics$SUBMITTERNAME){
+    rmarkdown::render(input = render_file, 
+                      output_format = "pdf_document",
+                      output_file = paste(submitter, "_", start_date, "_", 
+                                          end_date, ".pdf", sep=''),
+                      output_dir = hospital_path)
+  }
+  
 }
