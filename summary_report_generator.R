@@ -1,5 +1,13 @@
-# Stop running code if duplicate submitter IDs have been discovered in 'main_report_generator'
-if(nrow(ID_test) != 0) {stopQuietly()}
+# Set a variable to allow us to source main_report_generator.R and diagnosis_report_generator.R
+# witout running those files
+run_pdfs <- FALSE
+ 
+# Source main_report_generator.R and diagnosis_report_generator.R
+report_run <- paste0(wd, slash, "main_report_generator.R")
+source(report_run)
+ 
+diag_run <- paste0(wd, slash, "diagnosis_report_generator.R")
+source(diag_run)
  
 ##### PREPARE SUMMARY REPORT - HOSPITAL #####
  
@@ -50,19 +58,22 @@ write.csv(hosp_summary, paste0(admin_path, slash, "hosp_summary.csv"))
  
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
  
-# Get all unique diagnosis/patient combinations for period of interest
-diag_all <- dd_diag %>%
-  group_by(DIAGNOSIS, PATIENTID) %>%
+# Get all unique disorder/patient combinations for period of interest
+diag_all <- dd_diag_narr %>%
+  group_by(DISORDER, PATIENTID) %>%
   summarise()
  
-# Get counts of each diagnosis
+# Remove all NAs
+diag_all <- diag_all[!is.na(diag_all$PATIENTID),]
+ 
+# Get counts of each disorder
 diag_all_count <- diag_all %>%
   summarise(`Total Count`=n())
  
-# Join full list of diagnoses to count of diagnoses
-diag <- as.data.frame(diag_desc$DIAGNOSIS, stringsAsFactors = FALSE)
-names(diag) <- "DIAGNOSIS"
-diag <- left_join(diag, diag_all_count, by="DIAGNOSIS")
+# Join full list of disorders to count of disorders
+diag <- as.data.frame(diag_narr$Disorder, stringsAsFactors = FALSE)
+names(diag) <- "DISORDER"
+diag <- left_join(diag, diag_all_count, by="DISORDER")
  
 # replace NAs with 0s
 diag[is.na(diag)] <- 0
@@ -137,15 +148,19 @@ all_sub_metrics <- initial_dd_filt %>%
   summarise(
     total_samples=n(),
     avg_transit_time = round(mean(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), 2),
-    min_transit_time = min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
-    max_transit_time = max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE),
-    rec_in_2_days = sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE),
+    min_transit_time = ifelse(!is.na(avg_transit_time), 
+                              min(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), NA),
+    max_transit_time = ifelse(!is.na(avg_transit_time),
+                              max(TRANSIT_TIME[TRANSIT_TIME >= cutoff], na.rm=TRUE), NA),
+    rec_in_2_days = ifelse(!is.na(avg_transit_time),
+                              sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE), NA),
     percent_rec_in_2_days = round(sum(TRANSIT_TIME <= 2 & TRANSIT_TIME >= cutoff, na.rm=TRUE)/
                                     sum(!is.na(TRANSIT_TIME) & TRANSIT_TIME >= cutoff) * 100, 2),
     met_goal = ifelse(percent_rec_in_2_days >= 95, 1, 0),
-    col_less_than_24_hours = sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
+    col_less_than_24_hours = ifelse(!is.na(avg_transit_time),
+                              sum(COLLECTIONDATE == BIRTHDATE & TRANSIT_TIME >= cutoff | 
                                    COLLECTIONDATE == BIRTHDATE + 1 & COLLECTIONTIME < BIRTHTIME & TRANSIT_TIME >= cutoff, 
-                                 na.rm=TRUE),
+                                   na.rm=TRUE), NA),    
     percent_less_than_24_hours = round(col_less_than_24_hours/sum(TRANSIT_TIME >= cutoff, na.rm=TRUE) * 100, 2),
     trans = sum(TRANSFUSED == 'Y'),
     trans_percent = round(trans/total_samples * 100, 2),
@@ -246,3 +261,6 @@ time_outliers <- initial_dd %>%
   arrange(desc(TRANSIT_TIME))
  
 write.csv(time_outliers, paste0(admin_path, slash, "transit_time_outliers.csv"))
+ 
+# Reset run_pdfs
+run_pdfs <- NULL
