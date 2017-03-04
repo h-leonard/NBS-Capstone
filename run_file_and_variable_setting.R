@@ -105,7 +105,7 @@ line_chart <- "monthly"
 # or do you want reports for all submitters? Enter "Y" if you wish to run
 # only a single report, "N" otherwise
  
-test_report <- "Y"
+test_report <- "N"
  
 #########
  
@@ -146,3 +146,6 @@ source(diag_run)
  
 summary_run <- paste0(wd, slash, "summary_report_generator.R")
 source(summary_run)
+ 
+narrative_list <- paste0(wd, slash, "narrative_list_generator.R")
+source(narrative_list)
