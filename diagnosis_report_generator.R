@@ -39,7 +39,10 @@ diagnoses <- diagnoses[,c(1:2,4,3)]
 # Run reports if not sourcing this file from summary_report_generator (which
 # sets the value of run_pdfs)
 if (!exists("run_pdfs")) {
- 
+  
+  # Add hard line break to the end of each narrative
+  diagnoses$Narrative <- paste0(diagnoses$Narrative, "\\\n")
+  
   # Change diagnosis report to include only a single submitter (if we are only testing the 
   # functionality rather than running all reports)
   if (test_report == "Y") diagnoses = diagnoses[diagnoses$SUBMITTERNAME == diagnoses$SUBMITTERNAME[1],]
