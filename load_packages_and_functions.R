@@ -91,7 +91,9 @@ read_data <- function(folder, ...) {
   if (ext == ".xlsx" | ext == ".xls") {
     initial_dd <- do.call(rbind, lapply(temp, function(x) read_excel(x, sheet = 1)))
   } else {
-    initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1")))
+    # initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1")))
+    lst <- lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1"))
+    initial_dd <- rbindlist(lst, fill=TRUE)
   }
   
   # Reformat any POSIXct columns as dates
@@ -103,7 +105,7 @@ read_data <- function(folder, ...) {
   if (!is.null(date_reformat)) {
     for (i in date_reformat) {
       if (class(initial_dd[,eval(i)][[1]]) != "Date") {
-        initial_dd[,i] <- as.Date(initial_dd[,i], "%m/%d/%Y", origin = "1900-01-01")
+        initial_dd[[i]] <- as.Date(initial_dd[[i]], "%m/%d/%Y", origin = "1900-01-01")
       }
     }
   }
@@ -210,3 +212,29 @@ stopQuietly <- function(...) {
   stop(simpleError(blankMsg));
   
 } 
+ 
+ 
+# Read in submitter names as we wish them to appear in the report
+temp <- paste(codes_path, slash, "VA NBS Report Card Hospital Names.csv", sep="")
+submitters <- as.data.frame(read.csv(temp, sep=","))
+names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
+submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
+ 
+# Test for IDs assigned to multiple hospitals in submitters
+ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, 
+                                                                       fromLast=TRUE)),]
+ 
+# Stop report if duplicate IDs are discovered
+if (nrow(ID_test) != 0){
+  e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
+  e_verb <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "is", "are")
+  e_messages <- ""
+  for (id in unique(ID_test$SUBMITTERID)) {
+    temp_hosps <- ID_test$HOSPITALREPORT[ID_test$SUBMITTERID == id]
+    test_hs <- paste0("\nHOSPITALS:     ", paste(temp_hosps, collapse=", "), "\n")
+    test_ids <- paste0("DUPLICATED ID: ", id, "\n")
+    e_messages <- paste0(e_messages, paste0(test_hs, test_ids))
+  }
+  {stop(sprintf("%s in 'VA NBS Report Card Hospital Names' %s assigned to more than one hospital:\n%s\nPlease correct in 'VA NBS Report Card Hospital Names' before running reports.", 
+                e_begin, e_verb, e_messages)) }
+}
