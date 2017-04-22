@@ -1,18 +1,17 @@
 ---
 output:
     pdf_document
-always_allow_html: yes
 ---
 ---
 title: `r submitter`
 date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
 ---
 \pagenumbering{gobble}
- 
+
 ```{r, echo=FALSE, message=FALSE}
 message <- messages[messages$Hospital == submitter, 2]
 ```
- 
+
 ```{r, echo=FALSE, message=FALSE}
 h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
 hospital_filt <- ungroup(hospital_metrics_plot)
@@ -24,7 +23,7 @@ bound <- rbind(h_plot, state_plot)
 title1 = "Percentage of Samples Received\nwithin Two Days of Collection"
 title2 = "Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
 ```
- 
+
 |      | Hospital || Hospital Rank | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
 | **Number of samples submitted** | `r format(h$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
@@ -36,25 +35,27 @@ title2 = "Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Colle
 | **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours`% | `r toOrdinal(h$rank_early_collection)` of `r state$submitters` | `r state$percent_less_than_24_hours`%
 | **Samples transfused prior to collection** |  `r h$trans` | `r h$trans_percent`% |  `r toOrdinal(h$rank_transfused)` of `r state$submitters`  |  `r state$trans_percent`% |
 | **Unsatisfactory samples** | `r h$unsat_count` |  `r h$unsat_percent`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r state$unsat_percent`% |
- 
+
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 # create table of unsat counts for hospital
 temp_unsats <- as.data.frame(t(select(h, eval(as.name(as.character(unsats$description[1]))):eval(as.name(as.character(unsats$description[nrow(unsats)]))))))
 temp_unsats$Type <- row.names(temp_unsats)
 temp_unsats <- temp_unsats[,c(2,1)]
 names(temp_unsats) <- c('Type','Count')
- 
+
 # remove all rows with NA for counts
 unsats_final <- temp_unsats[!is.na(temp_unsats$Count),]
- 
+
 # show unsat counts for each category if unsats_final has more than 0 observations
 if (nrow(unsats_final) > 0) {
   kable(unsats_final, row.names=FALSE, col.names=c('Unsatisfactory Samples','Count'))
 }
 ```
- 
+
+&nbsp;&nbsp;  
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
- 
+
 if (line_chart == 'quarterly') {
   
   # Plot percentage of samples received within 2 days over past 4 quarters
@@ -111,7 +112,7 @@ if (line_chart == 'quarterly') {
     theme(legend.position="bottom") +
     theme(legend.text = element_text(size = 10)) +
     theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
- 
+
 # Plot percentage of unsatisfactory samples over past 12 months
   p2 <- ggplot(bound, aes(x=PERIOD, y=unsat_percent, colour=SUBMITTERNAME, 
                   group=rev(SUBMITTERNAME))) +
@@ -129,13 +130,13 @@ if (line_chart == 'quarterly') {
     theme(legend.text = element_text(size = 10)) +
     theme(plot.margin = unit(c(0.6,0.3,0.3,0.5), "cm"))
 }
- 
+
 pushViewport(viewport(layout = grid.layout(1, 2)))
 print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
- 
+
 ```
- 
+
 \begin{center}
 `r if(!identical(message,character(0))) {message}`
 \end{center}
