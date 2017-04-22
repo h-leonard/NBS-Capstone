@@ -1,7 +1,7 @@
 # Load packages and functions for Newborn Screening Hospital Reporting
 # Do not access this file directly; "run_file_and_variable_setting.R"
 # will automatically run this file.
- 
+
 libs <- c('xtable',
           'data.table',
           'stringr',
@@ -20,14 +20,14 @@ libs <- c('xtable',
           'toOrdinal',
           'readxl',
           'rmarkdown')
- 
+
 for (l in libs) {
   if(!is.element(l, .packages(all.available = TRUE)) ) {
     install.packages(l)
   }
   suppressPackageStartupMessages(library(l, character.only=TRUE))
 }
- 
+
 # Install RDCOMClient if running on a PC (will not work on 
 # Mac as built for older version of R)
 if (exists("comp_type") && comp_type == 'PC') {
@@ -37,13 +37,13 @@ if (exists("comp_type") && comp_type == 'PC') {
   suppressPackageStartupMessages(library('RDCOMClient', character.only=TRUE))
   
 }
- 
+
 # Reformat start date and end date as dates
 if (exists("start_date")) {
   start_date <- as.Date(start_date, "%m/%d/%Y")
   end_date <- as.Date(end_date, "%m/%d/%Y")
 }
- 
+
 get_file_list <- function(folder) {
   
   # Returns list of files in a folder
@@ -55,7 +55,7 @@ get_file_list <- function(folder) {
   return(temp)
   
 }
- 
+
 get_file_extension <- function(folder) {
   
   # Returns the file extension of files in a folder. Assumes that all files have
@@ -71,12 +71,14 @@ get_file_extension <- function(folder) {
   return(data_type)
   
 }
- 
+
+folder = sample_data_path
+date_reformat = c("COLLECTIONDATE", "BIRTHDATE")
+
 read_data <- function(folder, ...) {
   
   # Returns dataframe of data. Optional arguments are columns to be reformatted as dates
-  # (for use with csv and txt files). When reading Excel files, all columns featuring
-  # POSIXct data are automatically reformatted as dates.
+  # (for use with csv and txt files).
   
   # Make list of columns to be reformatted as dates
   date_reformat = list(...)
@@ -88,18 +90,19 @@ read_data <- function(folder, ...) {
   ext <- get_file_extension(folder)
   
   # read in data using different methods depending on what type of data files we have (e.g., .xls vs. .txt)
-  if (ext == ".xlsx" | ext == ".xls") {
-    initial_dd <- do.call(rbind, lapply(temp, function(x) read_excel(x, sheet = 1)))
-  } else {
-    # initial_dd <- do.call(rbind, lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1")))
-    lst <- lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1"))
-    initial_dd <- rbindlist(lst, fill=TRUE)
-  }
+  lst <- lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1"))
+  initial_dd <- rbindlist(lst, fill=TRUE)
   
-  # Reformat any POSIXct columns as dates
-  initial_dd[] <- lapply(initial_dd, function(x) {
-    if (inherits(x, "POSIXct")) as.Date(x) else x
-    })
+  # read in data second time in order to get character vector of SUBMITTERID
+  sub_lst <- lapply(temp, function(x) read.csv(x, stringsAsFactors = FALSE, header=TRUE, sep=separator, fileEncoding="latin1",
+                                               colClasses="character"))
+  
+  sub_dd <- rbindlist(sub_lst, fill=TRUE)
+  
+  # replace initial_dd SAMPLEID with sub_dd version (to keep leading zeros)
+  if ("SAMPLEID" %in% names(initial_dd)) {
+    initial_dd$SAMPLEID <- as.character(sub_dd$SAMPLEID)
+  }
   
   # Reformat any specified columns as dates
   if (!is.null(date_reformat)) {
@@ -120,12 +123,6 @@ read_data <- function(folder, ...) {
     initial_dd$TRANSIT_TIME[initial_dd$TRANSIT_TIME == 9999] <- NA
   }
   
-  # If dataframe has LINKID column, change this to PATIENTID - this will only be
-  # an issue for the version of the data being used by UVA
-  if("LINKID" %in% names(initial_dd)) {
-    colnames(initial_dd)[which(names(initial_dd) == "LINKID")] <- "PATIENTID"
-  }
-  
   # If dataframe has CATEGORY column, remove any records that have category listed as "Proficiency", 
   # "Treatment", or "Treatment - PKU"
   remove_cats <- c("Proficiency","Treatment","Treatment - PKU")
@@ -134,7 +131,7 @@ read_data <- function(folder, ...) {
   return(initial_dd)
   
 }
- 
+
 create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date, e_date=end_date, period=line_chart) {
   
   # Given a dataframe, start date, and end date, returns 2 data frames filtered by
@@ -175,7 +172,7 @@ create_filt_dfs <- function(df, type=c("sample","diagnosis"), s_date=start_date,
   return(list(period_df, year_df))
   
 }
- 
+
 sendEmail <- function(to, subject, msgBody, file=NULL) {
   
   # Sends emails through Outlook client. Outlook needs to be open and will
@@ -201,7 +198,7 @@ sendEmail <- function(to, subject, msgBody, file=NULL) {
   OutMail$Send()
   
 }
- 
+
 stopQuietly <- function(...) {
   
   # Stops a source file quietly (without printing an error message), used in cases
@@ -212,18 +209,18 @@ stopQuietly <- function(...) {
   stop(simpleError(blankMsg));
   
 } 
- 
- 
+
+
 # Read in submitter names as we wish them to appear in the report
 temp <- paste(codes_path, slash, "VA NBS Report Card Hospital Names.csv", sep="")
 submitters <- as.data.frame(read.csv(temp, sep=","))
 names(submitters) <- c("SUBMITTERID","HOSPITALREPORT")
 submitters$SUBMITTERID <- as.character(submitters$SUBMITTERID)
- 
+
 # Test for IDs assigned to multiple hospitals in submitters
 ID_test <- submitters[(duplicated(submitters$SUBMITTERID) | duplicated(submitters$SUBMITTERID, 
                                                                        fromLast=TRUE)),]
- 
+
 # Stop report if duplicate IDs are discovered
 if (nrow(ID_test) != 0){
   e_begin <- ifelse(length(unique(ID_test$SUBMITTERID)) == 1, "One ID", "Several IDs")
