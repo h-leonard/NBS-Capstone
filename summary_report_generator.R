@@ -1,40 +1,40 @@
 # Set a variable to allow us to source main_report_generator.R and diagnosis_report_generator.R
 # witout running those files
 run_pdfs <- FALSE
- 
+
 # Source main_report_generator.R and diagnosis_report_generator.R
 report_run <- paste0(wd, slash, "main_report_generator.R")
 source(report_run)
- 
+
 diag_run <- paste0(wd, slash, "diagnosis_report_generator.R")
 source(diag_run)
- 
+
 ##### PREPARE SUMMARY REPORT - HOSPITAL #####
- 
+
 IDs <- c()
- 
+
 # Get all submitter IDs for each hospital
 for (i in 1:nrow(hospital_metrics)) {
   IDs[i] <- paste(submitters[submitters$HOSPITALREPORT 
                              %in% hospital_metrics$SUBMITTERNAME[i],]$SUBMITTERID, collapse="; ")
 }
- 
+
 # Reorganize columns
 hosp_summary <- hospital_metrics[,c(1:3,15,4:7,16,8:10,17,11:12,18,13:14,19:32)]
- 
+
 # Add submitter IDs
 hosp_summary <- cbind(as.data.frame(IDs), hosp_summary)
- 
+
 # Determine number of diagnoses for each hospital
 diag_count <- diagnoses %>%
   group_by(SUBMITTERNAME) %>%
   summarise(
     total=sum(Count)
   )
- 
+
 # Add diagnosis count to hosp_summary
 hosp_summary <- left_join(hosp_summary, diag_count, by="SUBMITTERNAME")
- 
+
 # Rename columns
 hosp_summary_cols <- c("Submitter IDs", "Submitter Name", "Sample Count", "Avg. Transit Time", "Rank: Transit Time",
                        "Min. Transit Time", "Max. Transit Time", "Received within 2 Days", 
@@ -45,55 +45,55 @@ hosp_summary_cols <- c("Submitter IDs", "Submitter Name", "Sample Count", "Avg. 
                        paste("Unsat:", unlist(as.list(as.character(unsats$description), sorted = FALSE))),
                        "Diagnosis Count")
 names(hosp_summary) <- hosp_summary_cols
- 
+
 # Replace NAs with 0s
 hosp_summary[is.na(hosp_summary)] <- 0
- 
+
 # Change 0s to 'NO' and 1s to 'YES' for met goal
 hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` <- 
   ifelse(hosp_summary$`Met 95% of Samples Received within 2 Days Goal?` == 0, 'no', 'yes')
- 
+
 # Write to csv for now - may ultimately want to write to Excel
 write.csv(hosp_summary, paste0(admin_path, slash, "hosp_summary.csv"))
- 
+
 ##### PREPARE SUMMARY REPORT - DIAGNOSES #####
- 
+
 # Get all unique disorder/patient combinations for period of interest
 diag_all <- dd_diag_narr %>%
-  group_by(DISORDER, PATIENTID) %>%
+  group_by(DISORDER, LINKID) %>%
   summarise()
- 
+
 # Remove all NAs
-diag_all <- diag_all[!is.na(diag_all$PATIENTID),]
- 
+diag_all <- diag_all[!is.na(diag_all$LINKID),]
+
 # Get counts of each disorder
 diag_all_count <- diag_all %>%
   summarise(`Total Count`=n())
- 
+
 # Join full list of disorders to count of disorders
 diag <- as.data.frame(diag_narr$Disorder, stringsAsFactors = FALSE)
 names(diag) <- "DISORDER"
 diag <- left_join(diag, diag_all_count, by="DISORDER")
- 
+
 # replace NAs with 0s
 diag[is.na(diag)] <- 0
- 
+
 # Publish diagnosis summary to admin folder
 write.csv(diag, paste0(admin_path, slash, "diagnosis_summary.csv"))
- 
+
 ##### PREPARE SUMMARY REPORT - STATE #####
- 
+
 ## COLUMN 1 PREP: HOSPITALS ONLY: Averaged over *hospitals*
 state_summary <- state
- 
+
 # find counts of each unsat category for hospital submitters
 state_h_unsats <- unsats_ready %>%
   replace(is.na(.), 0) %>%
   summarise_each(funs(sum), -SUBMITTERNAME)
- 
+
 # add unsat counts to state summary
 state_summary <- cbind(state_summary, state_h_unsats)
- 
+
 ## COLUMN 2 PREP: HOSPITALS ONLY: Averaged over *samples*
 state_h_samp <- dd %>%
   select(TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
@@ -119,17 +119,17 @@ state_h_samp <- dd %>%
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = round(unsat_count/total_samples * 100, 2)
   )
- 
+
 # add unsat counts to state summary
 state_h_samp <- cbind(state_h_samp, state_h_unsats)
- 
+
 ## COLUMN 3 PREP: ALL SUBMITTERS: Averaged over *submitters*
- 
+
 # filter initial_dd for time period of interest and remove
 # any records missing SUBMITTERID
 initial_dd_filt <- initial_dd %>%
   filter(BIRTHDATE >= start_date & BIRTHDATE <= end_date, SUBMITTERID != "" | !is.na(SUBMITTERID))
- 
+
 # Get count of submitters, both hospital and non-hospital
 # (count all the unique IDs in data, subtract the number of hospital
 # IDs since some hospitals have multiple IDs, then add back in the number
@@ -138,7 +138,7 @@ initial_dd_filt <- initial_dd %>%
 all_sub <- length(unique(initial_dd_filt$SUBMITTERID)) - 
   length(intersect(initial_dd_filt$SUBMITTERID, submitters$SUBMITTERID)) + 
   length(intersect(submitters$HOSPITALREPORT, dd$SUBMITTERNAME))
- 
+
 # determine metrics by non-hospital submitter
 all_sub_metrics <- initial_dd_filt %>%
   filter(!(SUBMITTERID %in% submitters$SUBMITTERID)) %>%
@@ -167,23 +167,23 @@ all_sub_metrics <- initial_dd_filt %>%
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = round(unsat_count/total_samples * 100, 2)
   )
- 
+
 # Bind non-hospital submitter summaries with hospital summaries
 all_sub_metrics$SUBMITTERNAME <- NA
 all_sub_metrics <- all_sub_metrics[,c(15,1:14)]
 all_sub_metrics$SUBMITTERID <- NULL
 all_sub_metrics <- rbind(all_sub_metrics, temp_hosp_metrics)
- 
+
 # Get count of unsats by category for all submitters
 unsat_all_prep <- initial_dd_filt[!is.na(initial_dd_filt$UNSATCODE),] %>% 
   group_by(UNSATCODE) %>%
   summarise(count = n())  
- 
+
 unsat_all_amts <- left_join(unsats, unsat_all_prep, by = c("code" = "UNSATCODE"))
 unsat_all_amts[is.na(unsat_all_amts)] <- 0
 unsat_all_ready <- as.data.frame(t(unsat_all_amts[,3]))
 names(unsat_all_ready) <- unsat_all_amts[,2]
- 
+
 # Get state averages across all submitters (hospital and non-hospital)
 state_all_sub <- all_sub_metrics %>%
   summarise(
@@ -203,9 +203,9 @@ state_all_sub <- all_sub_metrics %>%
     unsat_count = sum(unsat_count, na.rm=TRUE),
     unsat_percent = round(mean(unsat_percent, na.rm=TRUE), 2)
   )
- 
+
 state_all_sub <- cbind(state_all_sub, unsat_all_ready)
- 
+
 ## COLUMN 4 PREP: ALL SUBMITTERS: Averaged over *samples*
 state_all_samp <- initial_dd_filt %>%
   select(SUBMITTERID, TRANSIT_TIME, COLLECTIONDATE, COLLECTIONTIME, BIRTHDATE, BIRTHTIME, 
@@ -230,37 +230,37 @@ state_all_samp <- initial_dd_filt %>%
     unsat_count = sum(!is.na(UNSATCODE)),
     unsat_percent = round(unsat_count/total_samples * 100, 2)
   )  
- 
+
 state_all_samp <- cbind(state_all_samp, unsat_all_ready)
- 
+
 state_summary <- rbind(state_summary, state_h_samp, state_all_sub, state_all_samp)
- 
+
 state_cols <- c("Number of Submitters","Sample Count","Avg. Transit Time","Min. Transit Time",
                 "Max. Transit Time","Received within 2 Days","% Received within 2 Days",
                 "Number of Submitters Meeting 95% of Samples Received within 2 Days Goal",
                 "% Submitters Meeting 95% of Samples within 2 Days Goal",
                 "< 24 Hours","% < 24 Hours","Transfused", "% Transfused", 
                 "Unsat Count", "Unsat %", paste("Unsat:", unlist(as.list(as.character(unsats$description), sorted = FALSE))))
- 
+
 names(state_summary) <- state_cols
- 
+
 # Transform table and rename columns
 state_summary <- as.data.frame(t(state_summary))
 names(state_summary) <- c("HOSPITALS ONLY: Averaged over hospitals",
                           "HOSPITALS ONLY: Averaged over samples",
                           "ALL SUBMITTERS: Averaged over submitters",
                           "ALL SUBMITTERS: Averaged over samples")
- 
+
 # Publish state summary to admin folder
 write.csv(state_summary, paste0(admin_path, slash, "state_summary.csv"))
- 
+
 ##### PREPARE OUTLIER TRANSIT TIME REPORT #####
- 
+
 time_outliers <- initial_dd %>%
   filter(TRANSIT_TIME > 10, BIRTHDATE >= start_date & BIRTHDATE <= end_date) %>%
   arrange(desc(TRANSIT_TIME))
- 
+
 write.csv(time_outliers, paste0(admin_path, slash, "transit_time_outliers.csv"))
- 
+
 # Remove run_pdfs
 rm(run_pdfs)
