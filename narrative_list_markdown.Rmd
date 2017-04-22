@@ -5,10 +5,10 @@ output:
 ---
 title: Disorder Narrative List
 ---
- 
+
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 panderOptions('keep.line.breaks', TRUE)
- 
+
 # show disorder and narrative for each disorder
-pander(diag_narr_list, justify = "left", split.cells = c(20, 50), split.table = Inf, 'keep.line.breaks' = TRUE)
+pander(diag_narr, justify = "left", split.cells = c(17, 15, 50), split.table = Inf, 'keep.line.breaks' = TRUE)
 ```
