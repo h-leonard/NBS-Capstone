@@ -38,7 +38,7 @@ hosp_summary <- left_join(hosp_summary, diag_count, by="SUBMITTERNAME")
 # Rename columns
 hosp_summary_cols <- c("Submitter IDs", "Submitter Name", "Sample Count", "Avg. Transit Time", "Rank: Transit Time",
                        "Min. Transit Time", "Max. Transit Time", "Received within 2 Days", 
-                       "% Recevied within 2 Days","Rank: Received within 2 Days",
+                       "% Received within 2 Days","Rank: Received within 2 Days",
                        "Met 95% of Samples Received within 2 Days Goal?", "< 24 Hours", 
                        "% < 24 Hours", "Rank: < 24 Hours", "Transfused", "% Transfused", 
                        "Rank: Transfused", "Unsat Count", "Unsat %", "Rank: Unsats", 
