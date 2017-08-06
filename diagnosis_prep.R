@@ -1,5 +1,8 @@
 # PREPARE DIAGNOSIS DATA
 
+# test to make sure data has the correct columns
+col_check(diag_data_path, "diagnosis")
+
 # read in narratives for diagnoses
 diag_narr <- read.csv(paste(codes_path, slash, "diagnosis_narratives.csv", sep=""), 
                       stringsAsFactors = FALSE)
@@ -33,19 +36,24 @@ diag_extend_wid <- ncol(diag_extend)
 # read in diagnosis data
 initial_dd_diag <- read_data(diag_data_path, "DIAGNOSISDATE")
 
+# check that range of DIAGNSOSISDATE dates overlaps the requested start and end date
+date_comp_check(initial_dd_diag, "diagnosis")
+
 # filter diagnosis data based on start/end date
 temp_dd_diag <- create_filt_dfs(initial_dd_diag, type="diagnosis")
 dd_diag <- as.data.frame(temp_dd_diag[1])
 
-# find the disorder name for each diagnosis in the data
-for (i in 1:nrow(dd_diag)) {
-  loc = which(diag_extend[,c(6:diag_extend_wid)]==dd_diag$DIAGNOSIS[i])
-  if (length(loc) == 0) {
-    loc = NA
-    dd_diag$DISORDER[i] <- NA
-  } else {
-    num_row = ifelse(loc %% diag_extend_len != 0, loc %% diag_extend_len, diag_extend_len)
-    dd_diag$DISORDER[i] <- diag_extend[num_row, 1]
+# if dd_diag has any rows, find the disorder name for each diagnosis in the data
+if (nrow(dd_diag) > 0) {
+  for (i in 1:nrow(dd_diag)) {
+   loc = which(diag_extend[,c(6:diag_extend_wid)]==dd_diag$DIAGNOSIS[i])
+   if (length(loc) == 0) {
+     loc = NA
+     dd_diag$DISORDER[i] <- NA
+   } else {
+     num_row = ifelse(loc %% diag_extend_len != 0, loc %% diag_extend_len, diag_extend_len)
+     dd_diag$DISORDER[i] <- diag_extend[num_row, 1]
+   }
   }
 }
 
