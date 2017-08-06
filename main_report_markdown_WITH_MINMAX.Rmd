@@ -9,36 +9,36 @@ date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0"
 \pagenumbering{gobble}
 
 ```{r, echo=FALSE, message=FALSE}
-message <- messages[messages$Hospital == submitter, 2]
+message <- messages[messages$Name == submitter, 2]
 ```
 
 ```{r, echo=FALSE, message=FALSE}
-h <- hospital_metrics[hospital_metrics$SUBMITTERNAME==submitter,]
-hospital_filt <- ungroup(hospital_metrics_plot)
-h_plot <- hospital_filt[hospital_filt$SUBMITTERNAME==submitter,]
-h_plot$SUBMITTERNAME <- 'Hospital'
-max_unsat_h <- max(max_overall_unsat, h_plot$unsat_percent)
-min_transit_h <- min(min_transit_percent, h_plot$percent_rec_in_2_days)
-bound <- rbind(h_plot, state_plot)
+o <- org_metrics[org_metrics$SUBMITTERNAME==submitter,]
+org_filt <- ungroup(org_metrics_plot)
+o_plot <- org_filt[org_filt$SUBMITTERNAME==submitter,]
+o_plot$SUBMITTERNAME <- 'Hospital'
+max_unsat_o <- max(max_overall_unsat, o_plot$unsat_percent)
+min_transit_o <- min(min_transit_percent, o_plot$percent_rec_in_2_days)
+bound <- rbind(o_plot, state_plot)
 title1 = "Percentage of Samples Received\nwithin Two Days of Collection"
 title2 = "Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
 ```
 
 |      | Hospital || Hospital Rank | Virginia |
 | -------------------------------------|--------|--------|---------|---------|
-| **Number of samples submitted** | `r format(h$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
-| **Average transit time** | `r h$avg_transit_time` days |  | `r toOrdinal(h$rank_transit)` of `r state$submitters` | `r state$avg_transit_time` days |
-| &nbsp;&nbsp;&nbsp;&nbsp;Minimum transit time | `r h$min_transit_time` days |  |  |  |
-| &nbsp;&nbsp;&nbsp;&nbsp;Maximum transit time | `r h$max_transit_time` days |  |  |  |
+| **Number of samples submitted** | `r format(o$total_samples, big.mark=",", trim=TRUE)` |  |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
+| **Average transit time** | `r o$avg_transit_time` days |  | `r toOrdinal(o$rank_transit)` of `r state$submitters` | `r state$avg_transit_time` days |
+| &nbsp;&nbsp;&nbsp;&nbsp;Minimum transit time | `r o$min_transit_time` days |  |  |  |
+| &nbsp;&nbsp;&nbsp;&nbsp;Maximum transit time | `r o$max_transit_time` days |  |  |  |
 | **Samples received within 2 days of** |  |  |  |  | 
-| **&nbsp;&nbsp;&nbsp;&nbsp;collection (GOAL: 95%)** | `r format(h$rec_in_2_days, big.mark=",", trim=TRUE)` | `r h$percent_rec_in_2_days`% | `r toOrdinal(h$rank_percent_within_goal)` of `r state$submitters` | `r state$percent_rec_in_2_days`% |
-| **Samples collected at < 24 hours of age** | `r h$col_less_than_24_hours` | `r h$percent_less_than_24_hours`% | `r toOrdinal(h$rank_early_collection)` of `r state$submitters` | `r state$percent_less_than_24_hours`%
-| **Samples transfused prior to collection** |  `r h$trans` | `r h$trans_percent`% |  `r toOrdinal(h$rank_transfused)` of `r state$submitters`  |  `r state$trans_percent`% |
-| **Unsatisfactory samples** | `r h$unsat_count` |  `r h$unsat_percent`% | `r toOrdinal(h$rank_unsats)` of `r state$submitters`  | `r state$unsat_percent`% |
+| **&nbsp;&nbsp;&nbsp;&nbsp;collection (GOAL: 95%)** | `r format(o$rec_in_2_days, big.mark=",", trim=TRUE)` | `r o$percent_rec_in_2_days`% | `r toOrdinal(o$rank_percent_within_goal)` of `r state$submitters` | `r state$percent_rec_in_2_days`% |
+| **Samples collected at < 24 hours of age** | `r o$col_less_than_24_hours` | `r o$percent_less_than_24_hours`% | `r toOrdinal(o$rank_early_collection)` of `r state$submitters` | `r state$percent_less_than_24_hours`%
+| **Samples transfused prior to collection** |  `r o$trans` | `r o$trans_percent`% |  `r toOrdinal(o$rank_transfused)` of `r state$submitters`  |  `r state$trans_percent`% |
+| **Unsatisfactory samples** | `r o$unsat_count` |  `r o$unsat_percent`% | `r toOrdinal(o$rank_unsats)` of `r state$submitters`  | `r state$unsat_percent`% |
 
 ```{r, echo=FALSE, results='markdown', message=FALSE}
 # create table of unsat counts for hospital
-temp_unsats <- as.data.frame(t(select(h, eval(as.name(as.character(unsats$description[1]))):eval(as.name(as.character(unsats$description[nrow(unsats)]))))))
+temp_unsats <- as.data.frame(t(select(o, eval(as.name(as.character(unsats$description[1]))):eval(as.name(as.character(unsats$description[nrow(unsats)]))))))
 temp_unsats$Type <- row.names(temp_unsats)
 temp_unsats <- temp_unsats[,c(2,1)]
 names(temp_unsats) <- c('Type','Count')
@@ -61,7 +61,7 @@ if (line_chart == 'quarterly') {
   # Plot percentage of samples received within 2 days over past 4 quarters
   p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
     scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25), format = "%Y Q%q") +
-    scale_y_continuous(limits=c(min_transit_h, 100)) +
+    scale_y_continuous(limits=c(min_transit_o, 100)) +
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(.(title1))) + 
     theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
@@ -81,7 +81,7 @@ if (line_chart == 'quarterly') {
                   group=rev(SUBMITTERNAME))) +
     scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%Y Q%q") +
-    scale_y_continuous(limits=c(0, max_unsat_h)) +
+    scale_y_continuous(limits=c(0, max_unsat_o)) +
     labs(x="Quarter", y="Percentage") +
     ggtitle(bquote(.(title2))) + 
     theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
@@ -99,7 +99,7 @@ if (line_chart == 'quarterly') {
    p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
     scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%b %Y") +
-    scale_y_continuous(limits=c(min_transit_h, 100)) +
+    scale_y_continuous(limits=c(min_transit_o, 100)) +
     labs(x="Month", y="Percentage") +
     ggtitle(bquote(.(title1))) + 
     theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
@@ -118,7 +118,7 @@ if (line_chart == 'quarterly') {
                   group=rev(SUBMITTERNAME))) +
     scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
                   format = "%b %Y") +
-    scale_y_continuous(limits=c(0, max_unsat_h)) +
+    scale_y_continuous(limits=c(0, max_unsat_o)) +
     labs(x="Month", y="Percentage") +
     ggtitle(bquote(.(title2))) + 
     theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
