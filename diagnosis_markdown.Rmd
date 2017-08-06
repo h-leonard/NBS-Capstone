@@ -5,20 +5,17 @@ output:
 ---
 title: Diagnosed Cases through Newborn Screening at `r I(submitter)`
 ---
-\pagenumbering{gobble}
- 
+
 \begin{center}
 This report is a summary of disorders affecting babies born at your facility. These babies benefited from timely diagnosis and treatment due to your vigilance in Newborn Screening. Please share this with the staff to remind them that Newborn Screening Saves Lives!
- 
+
 Diagnosis Date Range: `r dates`
 \end{center}
- 
-```{r, echo=FALSE, results='markdown', message=FALSE}
-diag_sub <- diagnoses[diagnoses$SUBMITTERNAME == submitter, 2:4]
-diag_sub$Narrative[nrow(diag_sub)] <- gsub("\\\\\\n", "", diag_sub$Narrative[nrow(diag_sub)])
-names(diag_sub) <- c("Diagnosis", "Count", "Description")
+
+```{r, echo=FALSE, results='asis', message=FALSE}
 panderOptions('keep.line.breaks', TRUE)
- 
+
 # show counts and description for each diagnosis
 pander(diag_sub, row.names = FALSE, justify = "left", split.cells = c(20, 10, 50), split.table = Inf, 'keep.line.breaks' = TRUE)
+
 ```
