@@ -1,0 +1,139 @@
+---
+output:
+    pdf_document
+---
+---
+title: `r submitter`
+date: `r gsub(" 0", " ", format(start_date, format="%B %d, %Y"))` - `r gsub(" 0", " ", format(end_date, format="%B %d, %Y"))`
+---
+\pagenumbering{gobble}
+
+```{r, echo=FALSE, message=FALSE}
+message <- messages[messages$Name == submitter, 2]
+```
+
+```{r, echo=FALSE, message=FALSE}
+o <- org_metrics[org_metrics$SUBMITTERNAME==submitter,]
+org_filt <- ungroup(org_metrics_plot)
+o_plot <- org_filt[org_filt$SUBMITTERNAME==submitter,]
+o_plot$SUBMITTERNAME <- 'Birth Center'
+max_unsat_o <- max(max_overall_unsat, o_plot$unsat_percent)
+min_transit_o <- min(min_transit_percent, o_plot$percent_rec_in_2_days)
+bound <- rbind(o_plot, state_plot)
+title1 = "Percentage of Samples Received\nwithin Two Days of Collection"
+title2 = "Percentage of Unsatisfactory Samples\nReceived (Requiring Repeat Collection)"
+```
+
+|      | Birth Center || Virginia |
+| -------------------------------------|--------|--------|---------|
+| **Number of samples submitted** | `r format(o$total_samples, big.mark=",", trim=TRUE)` |  | `r format(state$total_samples, big.mark=",", trim=TRUE)` |
+| **Average transit time** | `r o$avg_transit_time` days |  | `r state$avg_transit_time` days |
+| **Samples received within 2 days of** |  |  |  | 
+| **&nbsp;&nbsp;&nbsp;&nbsp;collection (GOAL: 95%)** | `r format(o$rec_in_2_days, big.mark=",", trim=TRUE)` | `r o$percent_rec_in_2_days`% | `r state$percent_rec_in_2_days`% |
+| **Samples collected at < 24 hours of age** | `r o$col_less_than_24_hours` | `r o$percent_less_than_24_hours`% | `r state$percent_less_than_24_hours`%
+| **Unsatisfactory samples** | `r o$unsat_count` |  `r o$unsat_percent`% | `r state$unsat_percent`% |
+
+```{r, echo=FALSE, results='markdown', message=FALSE}
+# create table of unsat counts for birth center
+temp_unsats <- as.data.frame(t(select(o, eval(as.name(as.character(unsats$description[1]))):eval(as.name(as.character(unsats$description[nrow(unsats)]))))))
+temp_unsats$Type <- row.names(temp_unsats)
+temp_unsats <- temp_unsats[,c(2,1)]
+names(temp_unsats) <- c('Type','Count')
+
+# remove all rows with NA for counts
+unsats_final <- temp_unsats[!is.na(temp_unsats$Count),]
+
+# show unsat counts for each category if unsats_final has more than 0 observations
+if (nrow(unsats_final) > 0) {
+  kable(unsats_final, row.names=FALSE, col.names=c('Unsatisfactory Samples','Count'))
+}
+```
+
+&nbsp;&nbsp;  
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+if (line_chart == 'quarterly') {
+  
+  # Plot percentage of samples received within 2 days over past 4 quarters
+  p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25), format = "%Y Q%q") +
+    scale_y_continuous(limits=c(min_transit_o, 100)) +
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
+    labs(x="Quarter", y="Percentage") +
+    ggtitle(bquote(.(title1))) + 
+    geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Birth Center',]) +
+    geom_hline(color="green4", aes(yintercept=95), size=1) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$PERIOD)) + .2), 
+                                          y=93, label="Goal: 95% of samples", vjust=1)) + 
+    scale_color_manual(values=c("blue","grey59")) +
+    theme(legend.title=element_blank()) + 
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
+  
+  # Plot percentage of unsatisfactory samples over past 4 quarters
+  p2 <- ggplot(bound, aes(x=PERIOD, y=unsat_percent, colour=SUBMITTERNAME, 
+                  group=rev(SUBMITTERNAME))) +
+    scale_x_yearqtr(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
+                  format = "%Y Q%q") +
+    scale_y_continuous(limits=c(0, max_unsat_o)) +
+    labs(x="Quarter", y="Percentage") +
+    ggtitle(bquote(.(title2))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
+    geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Birth Center',]) +
+    scale_color_manual(values=c("blue","grey59")) +
+    theme(legend.title=element_blank()) +
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.margin = unit(c(0.6,0.3,0.3,0.5), "cm"))
+  
+} else {
+  
+   # Plot percentage of samples received within 2 days over past 12 months
+   p1 <- ggplot(bound, aes(x=PERIOD, y=percent_rec_in_2_days, colour=SUBMITTERNAME, group=rev(SUBMITTERNAME))) +
+    scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
+                  format = "%b %Y") +
+    scale_y_continuous(limits=c(min_transit_o, 100)) +
+    labs(x="Month", y="Percentage") +
+    ggtitle(bquote(.(title1))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
+    geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Birth Center',]) +
+    scale_color_manual(values=c("blue","grey59")) +
+    geom_hline(color="green4", aes(yintercept=95), size=1) +
+    geom_text(color="green4", size=3, aes(x=(as.numeric(min(bound$PERIOD)) + .25), y=93, label="Goal: 95% of samples", vjust=1)) + 
+    theme(legend.title=element_blank()) + 
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.margin = unit(c(0.6,0.5,0.3,0.3), "cm"))
+
+# Plot percentage of unsatisfactory samples over past 12 months
+  p2 <- ggplot(bound, aes(x=PERIOD, y=unsat_percent, colour=SUBMITTERNAME, 
+                  group=rev(SUBMITTERNAME))) +
+    scale_x_yearmon(breaks = seq(from = min(bound$PERIOD), to = max(bound$PERIOD), by = 0.25),
+                  format = "%b %Y") +
+    scale_y_continuous(limits=c(0, max_unsat_o)) +
+    labs(x="Month", y="Percentage") +
+    ggtitle(bquote(.(title2))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = 10, face = 'plain')) +
+    geom_line(size=2) +
+    geom_point(data=bound[bound$SUBMITTERNAME == 'Birth Center',]) +
+    scale_color_manual(values=c("blue","grey59")) +
+    theme(legend.title=element_blank()) +
+    theme(legend.position="bottom") +
+    theme(legend.text = element_text(size = 10)) +
+    theme(plot.margin = unit(c(0.6,0.3,0.3,0.5), "cm"))
+}
+
+pushViewport(viewport(layout = grid.layout(1, 2)))
+print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+
+```
+
+\begin{center}
+`r if(!identical(message,character(0))) {message}`
+\end{center}
